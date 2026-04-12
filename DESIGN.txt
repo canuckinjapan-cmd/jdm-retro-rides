@@ -1,0 +1,18 @@
+# JDM Retro Rides - Design Specifications
+
+## Typography
+- **Primary Font:** Plus Jakarta Sans
+- **Headings:** Plus Jakarta Sans, Bold/ExtraBold
+- **Body Text:** Plus Jakarta Sans, Regular/Medium
+
+## Color Palette
+- **Text Color:** True Black (#000000) for all content text.
+- **Exceptions:** Navigation links and interactive elements maintain their specific brand colors (Blue/Slate/White).
+- **Primary Brand Color:** #0058be (Secondary in Tailwind config)
+- **Background:** #f9f9f9 (Surface)
+- **Surface Containers:** #eeeeee, #f3f3f4
+
+## UI Elements
+- **Border Radius:** 0.5rem (Default), 1rem (XL)
+- **Navigation:** Glassmorphism effect (backdrop-blur)
+- **Animations:** Reveal on scroll, Fade-in-up for hero section.

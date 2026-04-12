@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Inventory | JDM Retro Rides</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary": "#924700", "inverse-primary": "#c0c6db", "surface": "#f9f9f9", "surface-bright": "#f9f9f9",
+            "on-secondary-fixed": "#001a42", "on-error-container": "#93000a", "tertiary-fixed": "#ffdcc6",
+            "on-tertiary-fixed-variant": "#723600", "on-surface": "#000000", "inverse-on-surface": "#f0f1f1",
+            "on-secondary-container": "#fefcff", "secondary-fixed": "#d8e2ff", "tertiary-fixed-dim": "#ffb786",
+            "surface-container-highest": "#e2e2e2", "inverse-surface": "#2f3131", "surface-dim": "#dadada",
+            "outline": "#727785", "on-tertiary": "#ffffff", "secondary-fixed-dim": "#adc6ff",
+            "on-primary-container": "#fefcff", "surface-container": "#eeeeee", "surface-container-high": "#e8e8e8",
+            "secondary-container": "#2170e4", "on-error": "#ffffff", "on-secondary": "#ffffff",
+            "surface-container-lowest": "#ffffff", "primary-fixed-dim": "#c0c6db", "outline-variant": "#c2c6d6",
+            "surface-container-low": "#f3f3f4", "on-tertiary-container": "#fffbff", "on-secondary-fixed-variant": "#004395",
+            "primary-fixed": "#dce2f7", "surface-tint": "#575e70", "tertiary-container": "#b75b00",
+            "background": "#f9f9f9", "error": "#ba1a1a", "primary": "#000000", "primary-container": "#6e7487",
+            "on-primary": "#ffffff", "on-tertiary-fixed": "#311400", "on-background": "#000000",
+            "error-container": "#ffdad6", "on-surface-variant": "#000000", "on-primary-fixed": "#141b2b",
+            "surface-variant": "#e2e2e2", "on-primary-fixed-variant": "#404758", "secondary": "#1d4ed8"
+          },
+          "borderRadius": { "DEFAULT": "0.5rem", "lg": "0.5rem", "xl": "1rem", "full": "9999px" },
+          "fontFamily": { "headline": ["Plus Jakarta Sans"], "body": ["Plus Jakarta Sans"], "label": ["Plus Jakarta Sans"] }
+        },
+      },
+    }
+  </script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    html { scroll-behavior: smooth; }
+    .reveal { opacity: 0; transform: translateY(20px); transition: all 0.8s ease-out; }
+    .reveal.active { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body class="bg-background text-on-background">
+  <nav class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-100">
+    <div class="flex justify-between items-center max-w-7xl mx-auto px-8 h-20">
+      <div class="flex items-center gap-3">
+        <img alt="Logo" class="h-10 w-auto object-contain" src="https://danburgess.com/2026-assets/JDM/JDM-Retrorides-logo1.png">
+        <div class="text-2xl font-black text-black font-headline tracking-tight">JDM Retro Rides</div>
+      </div>
+      <div class="hidden md:flex items-center space-x-8">
+        <a class="text-slate-600 hover:text-black hover:underline decoration-black underline-offset-4 transition-colors font-headline" href="index.html">Home</a>
+        <a class="text-slate-600 hover:text-black hover:underline decoration-black underline-offset-4 transition-colors font-headline" href="index.html#about">About</a>
+        <a class="text-blue-700 font-bold border-b-2 border-blue-700 pb-1 font-headline" href="inventory.html">Vehicles</a>
+        <a class="bg-secondary text-on-secondary px-6 py-2.5 rounded-lg font-bold hover:opacity-80 transition-opacity" href="index.html#contact">Contact</a>
+      </div>
+      <div class="md:hidden"><button id="mobile-menu-btn" class="material-symbols-outlined text-3xl">menu</button></div>
+    </div>
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-slate-100 p-6 space-y-4">
+      <a class="block text-slate-600" href="index.html">Home</a>
+      <a class="block text-slate-600" href="index.html#about">About</a>
+      <a class="block text-blue-700 font-bold" href="inventory.html">Vehicles</a>
+      <a class="block bg-secondary text-white text-center py-3 rounded-lg font-bold" href="index.html#contact">Contact</a>
+    </div>
+  </nav>
+
+<div class="pt-32">
+<!-- Introductory Header Section (Matched with SCREEN_14) -->
+<header class="max-w-7xl mx-auto px-6 mb-10">
+<div class="inline-block mb-4">
+  <h1 class="text-4xl font-extrabold tracking-tight text-primary mb-2">Inventory</h1>
+  <div class="h-1 w-full bg-gradient-to-r from-secondary to-transparent"></div>
+</div>
+<p class="text-on-surface-variant max-w-2xl" style="">Discover our curated collection of legendary Japanese domestic market classics. Each vehicle is hand-selected and rigorously inspected for quality and authenticity.</p>
+</header>
+<!-- Filters Section (From SCREEN_25) -->
+<section class="bg-surface border-y border-outline-variant">
+<div class="max-w-7xl mx-auto px-6 py-4">
+<div class="flex flex-wrap items-center justify-between gap-4">
+<div class="flex flex-wrap items-center gap-4 text-sm font-medium">
+<span class="text-on-surface-variant uppercase tracking-wider text-xs font-bold" style="">Filter by:</span>
+<div class="relative">
+<select id="sort-year" class="appearance-none bg-white border border-outline-variant px-4 py-2 pr-10 rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none">
+<option value="featured">Featured</option>
+<option value="newest">Year (Newest)</option>
+<option value="oldest">Year (Oldest)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant" style="">expand_more</span>
+</div>
+<div class="relative">
+<select id="sort-price" class="appearance-none bg-white border border-outline-variant px-4 py-2 pr-10 rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none">
+<option value="">Price (Sort)</option>
+<option value="high-low">Price (High to Low)</option>
+<option value="low-high">Price (Low to High)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant" style="">expand_more</span>
+</div>
+<div class="relative">
+<select id="sort-displacement" class="appearance-none bg-white border border-outline-variant px-4 py-2 pr-10 rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none">
+<option value="">Displacement (Sort)</option>
+<option value="high-low">Displacement (High to Low)</option>
+<option value="low-high">Displacement (Low to High)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant" style="">expand_more</span>
+</div>
+<label class="flex items-center gap-2 cursor-pointer" style="">
+<input id="filter-stock" class="w-4 h-4 text-secondary border-outline-variant rounded focus:ring-secondary" type="checkbox">
+<span class="text-on-surface" style="">In stock only</span>
+</label>
+</div>
+<div class="text-sm text-on-surface-variant font-medium" style="">
+                    Showing <span class="text-on-surface font-bold" style="">4</span> vehicles
+                </div>
+</div>
+</div>
+</section>
+<main id="vehicle-container" class="max-w-7xl mx-auto px-6 py-8 space-y-8">
+<!-- Vehicle Card 1: Fairlady Z -->
+<div id="fairlady" data-year="1971" data-price="8200000" data-displacement="2400" data-stock="true" data-featured="1" class="vehicle-card flex flex-col lg:flex-row bg-white rounded-xl shadow-sm border border-outline-variant overflow-hidden hover:shadow-md transition-shadow opacity-90 grayscale-[20%] scroll-mt-24">
+<div class="lg:w-2/5 p-4 space-y-3 bg-gray-50/50 group">
+<div class="aspect-[16/10] overflow-hidden rounded-lg cursor-pointer group/main relative" id="fairlady-main-container">
+<img id="fairlady-main-img" class="w-full h-full object-cover transition-transform duration-500 group-hover/main:scale-105" alt="1971 Nissan Fairlady Z" src="https://danburgess.com/2026-assets/JDM/1971-240Z01.jpg">
+<div class="absolute inset-0 pointer-events-none">
+<span class="zoom-icon material-symbols-outlined text-white opacity-0 group-hover:opacity-100 text-3xl transition-opacity absolute bottom-4 right-4">zoom_in</span>
+</div>
+</div>
+<div class="grid grid-cols-4 gap-2">
+<div class="aspect-square rounded border border-outline-variant overflow-hidden cursor-pointer fairlady-thumb" data-index="1">
+<img class="w-full h-full object-cover" src="https://danburgess.com/2026-assets/JDM/1971-240Z02.jpg">
+</div>
+<div class="aspect-square rounded border border-outline-variant overflow-hidden cursor-pointer fairlady-thumb" data-index="2">
+<img class="w-full h-full object-cover" src="https://danburgess.com/2026-assets/JDM/1971-240Z03.jpg">
+</div>
+<div class="aspect-square rounded border border-outline-variant overflow-hidden cursor-pointer fairlady-thumb" data-index="3">
+<img class="w-full h-full object-cover" src="https://danburgess.com/2026-assets/JDM/1971-240Z04.jpg">
+</div>
+<div class="aspect-square rounded border border-outline-variant overflow-hidden cursor-pointer bg-slate-100 flex items-center justify-center fairlady-thumb-more hover:bg-slate-200 transition-colors" id="fairlady-more-photos">
+<span class="text-sm font-black text-slate-500">+5</span>
+</div>
+</div>
+</div>
+<div class="flex-1 p-6 lg:p-8 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-4">
+<h2 class="text-2xl font-black text-primary leading-tight" style="">1971 Nissan Fairlady Z <span class="text-xs font-bold">(J.6511)</span></h2>
+<span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full" style="">IN STOCK</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3">
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Price</span>
+<span class="text-secondary font-bold text-lg" style="">¥8,200,000</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Year</span>
+<span class="text-on-surface font-semibold" style="">1971</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Mileage</span>
+<span class="text-on-surface font-semibold" style="">51,000 km</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Displacement</span>
+<span class="text-on-surface font-semibold" style="">2,400 cc</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Transmission</span>
+<span class="text-on-surface font-semibold" style="">5MT</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Color</span>
+<span class="text-on-surface font-semibold" style="">Maroon</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Repaired</span>
+<span class="text-on-surface font-semibold" style="">No repair history</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Seating capacity</span>
+<span class="text-on-surface font-semibold" style="">2</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Grade</span>
+<span class="text-on-surface font-semibold" style="">4.0 / B</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Drive system</span>
+<span class="text-on-surface font-semibold" style="">RWD</span>
+</div>
+</div>
+</div>
+<div class="mt-8 flex gap-3">
+<button class="flex-1 bg-primary text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition-colors uppercase tracking-wide text-sm" style="">VIEW DETAILS</button>
+<a href="index.html?vehicle=1971 Nissan Fairlady Z (J.6511)#contact" class="px-6 py-3 border-2 border-primary text-primary rounded-lg font-bold hover:bg-primary hover:text-white transition-all uppercase tracking-wide text-sm text-center inline-block" style="">INQUIRE</a>
+</div>
+</div>
+</div>
+
+<!-- Vehicle Card 2: Skyline GTR -->
+<div id="skyline" data-year="1999" data-price="22500000" data-displacement="2600" data-stock="false" data-featured="2" class="vehicle-card flex flex-col lg:flex-row bg-white rounded-xl shadow-sm border border-outline-variant overflow-hidden hover:shadow-md transition-shadow scroll-mt-24">
+<div class="lg:w-2/5 p-4 space-y-3 bg-gray-50/50 group">
+<div class="aspect-[16/10] overflow-hidden rounded-lg cursor-pointer group/main relative" id="skyline-main-container">
+<img id="skyline-main-img" class="w-full h-full object-cover transition-transform duration-500 group-hover/main:scale-105" alt="1999 Nissan Skyline GTR R34 V-Spec II" src="https://danburgess.com/2026-assets/JDM/1999GTR-blue01.jpg">
+<div class="absolute inset-0 pointer-events-none">
+<span class="zoom-icon material-symbols-outlined text-white opacity-0 group-hover:opacity-100 text-3xl transition-opacity absolute bottom-4 right-4">zoom_in</span>
+</div>
+</div>
+<div class="grid grid-cols-4 gap-2">
+<div class="aspect-square rounded border border-outline-variant overflow-hidden cursor-pointer skyline-thumb" data-index="1">
+<img class="w-full h-full object-cover" src="https://danburgess.com/2026-assets/JDM/1999GTR-blue02.jpg">
+</div>
+<div class="aspect-square rounded border border-outline-variant overflow-hidden cursor-pointer skyline-thumb" data-index="2">
+<img class="w-full h-full object-cover" src="https://danburgess.com/2026-assets/JDM/1999GTR-blue03.jpg">
+</div>
+<div class="aspect-square rounded border border-outline-variant overflow-hidden cursor-pointer skyline-thumb" data-index="3">
+<img class="w-full h-full object-cover" src="https://danburgess.com/2026-assets/JDM/1999GTR-blue04.jpg">
+</div>
+<div class="aspect-square rounded border border-outline-variant overflow-hidden cursor-pointer bg-slate-100 flex items-center justify-center skyline-thumb-more hover:bg-slate-200 transition-colors" id="skyline-more-photos">
+<span class="text-sm font-black text-slate-500">+5</span>
+</div>
+</div>
+</div>
+<div class="flex-1 p-6 lg:p-8 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-4">
+<h2 class="text-2xl font-black text-primary leading-tight" style="">1999 Nissan Skyline GTR R34 V-Spec II <span class="text-xs font-bold">(J.6524)</span></h2>
+<span class="px-3 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded-full" style="">RESERVED</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3">
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Price</span>
+<span class="text-secondary font-bold text-lg" style="">¥22,500,000</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Year</span>
+<span class="text-on-surface font-semibold" style="">1999</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Mileage</span>
+<span class="text-on-surface font-semibold" style="">42,000 km</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Displacement</span>
+<span class="text-on-surface font-semibold" style="">2,600 cc</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Transmission</span>
+<span class="text-on-surface font-semibold" style="">6MT</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Color</span>
+<span class="text-on-surface font-semibold" style="">Bayside Blue</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Repaired</span>
+<span class="text-on-surface font-semibold" style="">No repair history</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Seating capacity</span>
+<span class="text-on-surface font-semibold" style="">4</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Grade</span>
+<span class="text-on-surface font-semibold" style="">4.5 / B</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Drive system</span>
+<span class="text-on-surface font-semibold" style="">2WD</span>
+</div>
+</div>
+</div>
+<div class="mt-8 flex gap-3">
+<button class="flex-1 bg-primary text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition-colors uppercase tracking-wide text-sm" style="">VIEW DETAILS</button>
+<a href="index.html?vehicle=1999 Nissan Skyline GTR R34 V-Spec II (J.6524)#contact" class="px-6 py-3 border-2 border-primary text-primary rounded-lg font-bold hover:bg-primary hover:text-white transition-all uppercase tracking-wide text-sm text-center inline-block" style="">INQUIRE</a>
+</div>
+</div>
+</div>
+
+<!-- Vehicle Card 3: Supra -->
+<div id="supra" data-year="1997" data-price="13900000" data-displacement="3000" data-stock="true" data-featured="3" class="vehicle-card flex flex-col lg:flex-row bg-white rounded-xl shadow-sm border border-outline-variant overflow-hidden hover:shadow-md transition-shadow scroll-mt-24">
+<div class="lg:w-2/5 p-4 space-y-3 bg-gray-50/50 group">
+<div class="aspect-[16/10] overflow-hidden rounded-lg cursor-pointer group/main relative" id="supra-main-container">
+<img id="supra-main-img" class="w-full h-full object-cover transition-transform duration-500 group-hover/main:scale-105" alt="1997 Toyota Supra RZ Turbo" src="https://danburgess.com/2026-assets/JDM/1997Supra-wht01.jpg">
+<div class="absolute inset-0 pointer-events-none">
+<span class="zoom-icon material-symbols-outlined text-white opacity-0 group-hover:opacity-100 text-3xl transition-opacity absolute bottom-4 right-4">zoom_in</span>
+</div>
+</div>
+<div class="grid grid-cols-4 gap-2">
+<div class="aspect-square rounded border border-outline-variant overflow-hidden cursor-pointer supra-thumb" data-index="1">
+<img class="w-full h-full object-cover" src="https://danburgess.com/2026-assets/JDM/1997Supra-wht02.jpg">
+</div>
+<div class="aspect-square rounded border border-outline-variant overflow-hidden cursor-pointer supra-thumb" data-index="2">
+<img class="w-full h-full object-cover" src="https://danburgess.com/2026-assets/JDM/1997Supra-wht03.jpg">
+</div>
+<div class="aspect-square rounded border border-outline-variant overflow-hidden cursor-pointer supra-thumb" data-index="3">
+<img class="w-full h-full object-cover" src="https://danburgess.com/2026-assets/JDM/1997Supra-wht04.jpg">
+</div>
+<div class="aspect-square rounded border border-outline-variant overflow-hidden cursor-pointer bg-slate-100 flex items-center justify-center supra-thumb-more hover:bg-slate-200 transition-colors" id="supra-more-photos">
+<span class="text-sm font-black text-slate-500">+5</span>
+</div>
+</div>
+</div>
+<div class="flex-1 p-6 lg:p-8 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-4">
+<h2 class="text-2xl font-black text-primary leading-tight" style="">1997 Toyota Supra RZ Turbo <span class="text-xs font-bold">(J.6526)</span></h2>
+<span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full" style="">IN STOCK</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3">
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Price</span>
+<span class="text-secondary font-bold text-lg" style="">¥13,900,000</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Year</span>
+<span class="text-on-surface font-semibold" style="">1997</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Mileage</span>
+<span class="text-on-surface font-semibold" style="">102,500 km</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Displacement</span>
+<span class="text-on-surface font-semibold" style="">3,000 cc</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Transmission</span>
+<span class="text-on-surface font-semibold">6MT</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Color</span>
+<span class="text-on-surface font-semibold" style="">Super White II</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Repaired</span>
+<span class="text-on-surface font-semibold" style="">No repair history</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Seating capacity</span>
+<span class="text-on-surface font-semibold" style="">4</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Grade</span>
+<span class="text-on-surface font-semibold" style="">4.5 / B</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium" style="">Drive system</span>
+<span class="text-on-surface font-semibold" style="">RWD</span>
+</div>
+</div>
+</div>
+<div class="mt-8 flex gap-3">
+<button class="flex-1 bg-primary text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition-colors uppercase tracking-wide text-sm" style="">VIEW DETAILS</button>
+<a href="index.html?vehicle=1997 Toyota Supra RZ Turbo (J.6526)#contact" class="px-6 py-3 border-2 border-primary text-primary rounded-lg font-bold hover:bg-primary hover:text-white transition-all uppercase tracking-wide text-sm text-center inline-block" style="">INQUIRE</a>
+</div>
+</div>
+</div>
+
+<!-- Vehicle Card 4: MR2 -->
+<div id="mr2" data-year="1996" data-price="2300000" data-displacement="2000" data-stock="false" data-featured="4" class="vehicle-card flex flex-col lg:flex-row bg-white rounded-xl shadow-sm border border-outline-variant overflow-hidden hover:shadow-md transition-shadow scroll-mt-24">
+<div class="lg:w-2/5 p-4 space-y-3 bg-gray-50/50 group">
+<div class="aspect-[16/10] overflow-hidden rounded-lg cursor-pointer group/main relative" id="mr2-main-container">
+<img id="mr2-main-img" class="w-full h-full object-cover transition-transform duration-500 group-hover/main:scale-105" alt="1996 Toyota MR2" src="https://danburgess.com/2026-assets/JDM/1996-ToyotaMR201.jpg">
+<div class="absolute inset-0 pointer-events-none">
+<span class="zoom-icon material-symbols-outlined text-white opacity-0 group-hover:opacity-100 text-3xl transition-opacity absolute bottom-4 right-4">zoom_in</span>
+</div>
+</div>
+<div class="grid grid-cols-4 gap-2">
+<div class="aspect-square rounded border border-outline-variant overflow-hidden cursor-pointer mr2-thumb" data-index="1">
+<img class="w-full h-full object-cover" src="https://danburgess.com/2026-assets/JDM/1996-ToyotaMR202.jpg">
+</div>
+<div class="aspect-square rounded border border-outline-variant overflow-hidden cursor-pointer mr2-thumb" data-index="2">
+<img class="w-full h-full object-cover" src="https://danburgess.com/2026-assets/JDM/1996-ToyotaMR203.jpg">
+</div>
+<div class="aspect-square rounded border border-outline-variant overflow-hidden cursor-pointer mr2-thumb" data-index="3">
+<img class="w-full h-full object-cover" src="https://danburgess.com/2026-assets/JDM/1996-ToyotaMR204.jpg">
+</div>
+<div class="aspect-square rounded border border-outline-variant overflow-hidden cursor-pointer bg-slate-100 flex items-center justify-center mr2-thumb-more hover:bg-slate-200 transition-colors" id="mr2-more-photos">
+<span class="text-sm font-black text-slate-500">+1</span>
+</div>
+</div>
+</div>
+<div class="flex-1 p-6 lg:p-8 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-4">
+<h2 class="text-2xl font-black text-primary leading-tight">1996 Toyota MR2 <span class="text-xs font-bold">(J.6502)</span></h2>
+<span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full">SOLD</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3">
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium">Price</span>
+<span class="text-secondary font-bold text-lg">¥2,300,000</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium">Year</span>
+<span class="text-on-surface font-semibold">1996</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium">Mileage</span>
+<span class="text-on-surface font-semibold">89,000 km</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium">Displacement</span>
+<span class="text-on-surface font-semibold">2,000 cc</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium">Transmission</span>
+<span class="text-on-surface font-semibold">AT</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium">Color</span>
+<span class="text-on-surface font-semibold">Super Red II</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium">Repaired</span>
+<span class="text-on-surface font-semibold">No repair history</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium">Seating capacity</span>
+<span class="text-on-surface font-semibold">2</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium">Grade</span>
+<span class="text-on-surface font-semibold">4.0 / B</span>
+</div>
+<div class="flex justify-between border-b border-gray-100 pb-2">
+<span class="text-on-surface-variant text-sm font-medium">Drive system</span>
+<span class="text-on-surface font-semibold">2WD</span>
+</div>
+</div>
+</div>
+<div class="mt-8 flex gap-3">
+<button class="flex-1 bg-primary text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition-colors uppercase tracking-wide text-sm">VIEW DETAILS</button>
+<a href="index.html?vehicle=1996 Toyota MR2 (J.6502)#contact" class="px-6 py-3 border-2 border-primary text-primary rounded-lg font-bold hover:bg-primary hover:text-white transition-all uppercase tracking-wide text-sm text-center inline-block">INQUIRE</a>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Footer (Matched with SCREEN_14) -->
+<footer class="bg-slate-900 dark:bg-black w-full px-8 relative py-6">
+<div class="max-w-7xl mx-auto space-y-4">
+<!-- Top row: Branding left, Facebook center, Nav right -->
+<div class="flex flex-col md:flex-row items-center justify-between gap-8">
+<div class="flex items-center gap-3">
+<img alt="JDM Retro Rides Logo" class="h-8 w-auto object-contain" src="https://danburgess.com/2026-assets/JDM/JDM-Retrorides-logo1.png" style="">
+<div class="text-xl font-black text-white font-['Plus_Jakarta_Sans'] tracking-tight" style="">JDM Retro Rides</div>
+</div>
+<button class="flex items-center gap-3 bg-white text-slate-900 px-6 py-2 rounded-full font-black font-['Plus_Jakarta_Sans'] tracking-tight transition-all duration-300 hover:bg-secondary hover:text-white hover:ring-2 hover:ring-secondary group" style="">
+<svg class="h-5 w-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path></svg>
+<span class="text-sm" style="">Follow us on Facebook</span>
+</button>
+<div class="flex items-center space-x-6">
+<a class="text-slate-400 hover:text-white transition-colors font-['Plus_Jakarta_Sans'] text-sm font-semibold" href="index.html" style="">Home</a>
+<a class="text-slate-400 hover:text-white transition-colors font-['Plus_Jakarta_Sans'] text-sm font-semibold" href="index.html#about" style="">About</a>
+<a class="text-blue-500 font-bold border-b-2 border-blue-500 pb-0.5 font-['Plus_Jakarta_Sans'] text-sm" href="#" style="">Vehicles</a>
+<a class="text-slate-400 hover:text-white transition-colors font-['Plus_Jakarta_Sans'] text-sm font-semibold" href="index.html#contact" style="">Contact</a>
+</div>
+</div>
+<div class="h-px w-full bg-slate-800"></div>
+<!-- Bottom row -->
+<div class="relative flex flex-col md:flex-row items-center justify-center py-4">
+<div class="md:absolute md:left-0 flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6 mb-4 md:mb-0">
+<a class="text-slate-500 hover:text-white transition-colors font-['Plus_Jakarta_Sans'] text-[10px] uppercase tracking-widest" href="#" style="">Privacy policy</a>
+<a class="text-slate-500 hover:text-white transition-colors font-['Plus_Jakarta_Sans'] text-[10px] uppercase tracking-widest" href="#" style="">Terms of service</a>
+<a class="text-slate-500 hover:text-white transition-colors font-['Plus_Jakarta_Sans'] text-[10px] uppercase tracking-widest" href="#" style="">Cookie settings</a>
+</div>
+<div class="text-slate-500 font-['Plus_Jakarta_Sans'] text-xs text-center" style="">
+                © 2026 JDM Retro Rides. All rights reserved.
+            </div>
+</div>
+</div>
+<a class="absolute bottom-8 right-8 bg-secondary text-white p-3 rounded-full shadow-lg hover:bg-secondary/80 hover:ring-1 hover:ring-blue-400 transition-all flex items-center justify-center group" href="#" title="Back to top" style="">
+<span class="material-symbols-outlined text-2xl group-hover:-translate-y-1 transition-transform" style="">arrow_upward</span>
+</a>
+</footer>
+
+<!-- Slideshow Modal -->
+<div id="slideshow-modal" class="fixed inset-0 z-[100] bg-black/95 hidden flex items-center justify-center">
+<button id="close-slideshow" class="absolute top-6 right-6 text-white hover:text-secondary transition-colors z-[110]">
+<span class="material-symbols-outlined text-4xl">close</span>
+</button>
+
+<button id="prev-slide" class="absolute left-6 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors z-[110]">
+<span class="material-symbols-outlined text-6xl">chevron_left</span>
+</button>
+
+<div id="slideshow-content" class="w-full max-w-5xl px-4 flex items-center justify-center relative touch-none">
+<img id="slideshow-img" src="" class="max-w-full max-h-[85vh] object-contain select-none transition-all duration-300">
+</div>
+
+<button id="next-slide" class="absolute right-6 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors z-[110]">
+<span class="material-symbols-outlined text-6xl">chevron_right</span>
+</button>
+
+<div class="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/70 font-bold tracking-widest text-sm" id="slideshow-counter">
+1 / 9
+</div>
+</div>
+
+<script>
+const carData = {
+  skyline: {
+    images: [
+      'https://danburgess.com/2026-assets/JDM/1999GTR-blue01.jpg',
+      'https://danburgess.com/2026-assets/JDM/1999GTR-blue02.jpg',
+      'https://danburgess.com/2026-assets/JDM/1999GTR-blue03.jpg',
+      'https://danburgess.com/2026-assets/JDM/1999GTR-blue04.jpg',
+      'https://danburgess.com/2026-assets/JDM/1999GTR-blue05.jpg',
+      'https://danburgess.com/2026-assets/JDM/1999GTR-blue06.jpg',
+      'https://danburgess.com/2026-assets/JDM/1999GTR-blue07.jpg',
+      'https://danburgess.com/2026-assets/JDM/1999GTR-blue08.jpg',
+      'https://danburgess.com/2026-assets/JDM/1999GTR-blue09.jpg'
+    ],
+    mainImgId: 'skyline-main-img'
+  },
+  fairlady: {
+    images: [
+      'https://danburgess.com/2026-assets/JDM/1971-240Z01.jpg',
+      'https://danburgess.com/2026-assets/JDM/1971-240Z02.jpg',
+      'https://danburgess.com/2026-assets/JDM/1971-240Z03.jpg',
+      'https://danburgess.com/2026-assets/JDM/1971-240Z04.jpg',
+      'https://danburgess.com/2026-assets/JDM/1971-240Z05.jpg',
+      'https://danburgess.com/2026-assets/JDM/1971-240Z06.jpg',
+      'https://danburgess.com/2026-assets/JDM/1971-240Z07.jpg',
+      'https://danburgess.com/2026-assets/JDM/1971-240Z08.jpg',
+      'https://danburgess.com/2026-assets/JDM/1971-240Z09.jpg'
+    ],
+    mainImgId: 'fairlady-main-img'
+  },
+  supra: {
+    images: [
+      'https://danburgess.com/2026-assets/JDM/1997Supra-wht01.jpg',
+      'https://danburgess.com/2026-assets/JDM/1997Supra-wht02.jpg',
+      'https://danburgess.com/2026-assets/JDM/1997Supra-wht03.jpg',
+      'https://danburgess.com/2026-assets/JDM/1997Supra-wht04.jpg',
+      'https://danburgess.com/2026-assets/JDM/1997Supra-wht05.jpg',
+      'https://danburgess.com/2026-assets/JDM/1997Supra-wht06.jpg',
+      'https://danburgess.com/2026-assets/JDM/1997Supra-wht07.jpg',
+      'https://danburgess.com/2026-assets/JDM/1997Supra-wht08.jpg',
+      'https://danburgess.com/2026-assets/JDM/1997Supra-wht09.jpg'
+    ],
+    mainImgId: 'supra-main-img'
+  },
+  mr2: {
+    images: [
+      'https://danburgess.com/2026-assets/JDM/1996-ToyotaMR201.jpg',
+      'https://danburgess.com/2026-assets/JDM/1996-ToyotaMR202.jpg',
+      'https://danburgess.com/2026-assets/JDM/1996-ToyotaMR203.jpg',
+      'https://danburgess.com/2026-assets/JDM/1996-ToyotaMR204.jpg',
+      'https://danburgess.com/2026-assets/JDM/1996-ToyotaMR205.jpg'
+    ],
+    mainImgId: 'mr2-main-img'
+  }
+};
+
+let currentSlideIndex = 0;
+let currentCarKey = 'skyline';
+
+// Hover logic helper
+function updateIconContrast(img, icon) {
+  if (!img || !icon) return;
+  
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 1;
+  canvas.height = 1;
+  
+  const checkBrightness = () => {
+    try {
+      // Draw a small area from the bottom right corner (where the icon is)
+      // We use a 50x50 area and scale it down to 1x1 to get average color
+      const sourceX = img.naturalWidth - 60;
+      const sourceY = img.naturalHeight - 60;
+      ctx.drawImage(img, sourceX, sourceY, 60, 60, 0, 0, 1, 1);
+      const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+      
+      // Calculate perceived brightness
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+      
+      if (brightness > 160) { // Light background
+        icon.classList.remove('text-white');
+        icon.classList.add('text-black');
+        icon.style.textShadow = '0 0 2px rgba(255,255,255,0.5)';
+      } else { // Dark background
+        icon.classList.remove('text-black');
+        icon.classList.add('text-white');
+        icon.style.textShadow = '0 0 3px rgba(0,0,0,0.5)';
+      }
+    } catch (e) {
+      // Fallback for CORS or other issues
+      icon.classList.add('text-white');
+      icon.style.textShadow = '0 1px 3px rgba(0,0,0,0.8)';
+    }
+  };
+
+  if (img.complete) {
+    checkBrightness();
+  } else {
+    img.onload = checkBrightness;
+  }
+}
+
+function setupHover(carKey, thumbClass) {
+  const data = carData[carKey];
+  const mainImg = document.getElementById(data.mainImgId);
+  const zoomIcon = mainImg.parentElement.querySelector('.zoom-icon');
+  const defaultImgSrc = data.images[0];
+
+  // Initial check
+  updateIconContrast(mainImg, zoomIcon);
+
+  document.querySelectorAll(`.${thumbClass}`).forEach(thumb => {
+    thumb.addEventListener('mouseenter', () => {
+      const index = parseInt(thumb.dataset.index);
+      mainImg.src = data.images[index];
+      updateIconContrast(mainImg, zoomIcon);
+    });
+    thumb.addEventListener('mouseleave', () => {
+      mainImg.src = defaultImgSrc;
+      updateIconContrast(mainImg, zoomIcon);
+    });
+  });
+}
+
+setupHover('skyline', 'skyline-thumb');
+setupHover('fairlady', 'fairlady-thumb');
+setupHover('supra', 'supra-thumb');
+setupHover('mr2', 'mr2-thumb');
+
+// Modal logic
+const modal = document.getElementById('slideshow-modal');
+const modalImg = document.getElementById('slideshow-img');
+const counter = document.getElementById('slideshow-counter');
+
+function openSlideshow(carKey, index) {
+  currentCarKey = carKey;
+  currentSlideIndex = index;
+  updateSlideshow();
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSlideshow() {
+  modal.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+function updateSlideshow() {
+  const images = carData[currentCarKey].images;
+  modalImg.style.opacity = '0';
+  setTimeout(() => {
+    modalImg.src = images[currentSlideIndex];
+    counter.textContent = `${currentSlideIndex + 1} / ${images.length}`;
+    modalImg.style.opacity = '1';
+  }, 150);
+}
+
+function nextSlide() {
+  const images = carData[currentCarKey].images;
+  currentSlideIndex = (currentSlideIndex + 1) % images.length;
+  updateSlideshow();
+}
+
+function prevSlide() {
+  const images = carData[currentCarKey].images;
+  currentSlideIndex = (currentSlideIndex - 1 + images.length) % images.length;
+  updateSlideshow();
+}
+
+// Event Listeners for opening modal
+document.getElementById('skyline-main-container').addEventListener('click', () => openSlideshow('skyline', 0));
+document.getElementById('skyline-more-photos').addEventListener('click', () => openSlideshow('skyline', 0));
+
+document.getElementById('fairlady-main-container').addEventListener('click', () => openSlideshow('fairlady', 0));
+document.getElementById('fairlady-more-photos').addEventListener('click', () => openSlideshow('fairlady', 0));
+
+document.getElementById('supra-main-container').addEventListener('click', () => openSlideshow('supra', 0));
+document.getElementById('supra-more-photos').addEventListener('click', () => openSlideshow('supra', 0));
+
+document.getElementById('mr2-main-container').addEventListener('click', () => openSlideshow('mr2', 0));
+document.getElementById('mr2-more-photos').addEventListener('click', () => openSlideshow('mr2', 0));
+
+document.getElementById('close-slideshow').addEventListener('click', closeSlideshow);
+document.getElementById('next-slide').addEventListener('click', nextSlide);
+document.getElementById('prev-slide').addEventListener('click', prevSlide);
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  if (modal.classList.contains('hidden')) return;
+  if (e.key === 'ArrowRight') nextSlide();
+  if (e.key === 'ArrowLeft') prevSlide();
+  if (e.key === 'Escape') closeSlideshow();
+});
+
+// Drag/Swipe logic
+let startX = 0;
+const content = document.getElementById('slideshow-content');
+
+content.addEventListener('mousedown', (e) => {
+  startX = e.clientX;
+});
+
+content.addEventListener('mouseup', (e) => {
+  const endX = e.clientX;
+  if (startX - endX > 50) nextSlide();
+  if (endX - startX > 50) prevSlide();
+});
+
+content.addEventListener('touchstart', (e) => {
+  startX = e.touches[0].clientX;
+});
+
+content.addEventListener('touchend', (e) => {
+  const endX = e.changedTouches[0].clientX;
+  if (startX - endX > 50) nextSlide();
+  if (endX - startX > 50) prevSlide();
+});
+
+// Filtering and Sorting Logic
+const vehicleContainer = document.getElementById('vehicle-container');
+const sortYear = document.getElementById('sort-year');
+const sortPrice = document.getElementById('sort-price');
+const sortDisplacement = document.getElementById('sort-displacement');
+const filterStock = document.getElementById('filter-stock');
+
+function updateInventory() {
+  const cards = Array.from(document.querySelectorAll('.vehicle-card'));
+  const yearVal = sortYear.value;
+  const priceVal = sortPrice.value;
+  const displacementVal = sortDisplacement.value;
+  const stockOnly = filterStock.checked;
+
+  // Filter
+  cards.forEach(card => {
+    const isStock = card.dataset.stock === 'true';
+    if (stockOnly && !isStock) {
+      card.classList.add('hidden');
+    } else {
+      card.classList.remove('hidden');
+    }
+  });
+
+  // Sort
+  const visibleCards = cards.filter(card => !card.classList.contains('hidden'));
+  
+  visibleCards.sort((a, b) => {
+    // Priority: Year (always active), then Price, then Displacement
+    // If a sort is selected for price or displacement, it overrides the year sort for that specific property
+    
+    if (priceVal) {
+      const priceA = parseInt(a.dataset.price);
+      const priceB = parseInt(b.dataset.price);
+      return priceVal === 'high-low' ? priceB - priceA : priceA - priceB;
+    }
+
+    if (displacementVal) {
+      const dispA = parseInt(a.dataset.displacement);
+      const dispB = parseInt(b.dataset.displacement);
+      return displacementVal === 'high-low' ? dispB - dispA : dispA - dispB;
+    }
+
+    if (yearVal === 'featured') {
+      const featA = parseInt(a.dataset.featured);
+      const featB = parseInt(b.dataset.featured);
+      return featA - featB;
+    }
+
+    // Default: Year
+    const yearA = parseInt(a.dataset.year);
+    const yearB = parseInt(b.dataset.year);
+    return yearVal === 'newest' ? yearB - yearA : yearA - yearB;
+  });
+
+  // Re-append sorted cards
+  visibleCards.forEach(card => vehicleContainer.appendChild(card));
+  
+  // Update count
+  const countSpan = document.querySelector('.text-on-surface.font-bold');
+  if (countSpan) {
+    countSpan.textContent = visibleCards.length;
+  }
+}
+
+sortYear.addEventListener('change', () => {
+  sortPrice.value = '';
+  sortDisplacement.value = '';
+  updateInventory();
+});
+
+sortPrice.addEventListener('change', () => {
+  sortYear.value = 'newest';
+  sortDisplacement.value = '';
+  updateInventory();
+});
+
+sortDisplacement.addEventListener('change', () => {
+  sortYear.value = 'newest';
+  sortPrice.value = '';
+  updateInventory();
+});
+
+filterStock.addEventListener('change', updateInventory);
+
+// Initial call
+updateInventory();
+</script>
+</body></html>

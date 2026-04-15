@@ -1,7 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
 import { 
-  initializeFirestore, 
+  getFirestore, 
   collection, 
   doc, 
   getDoc, 
@@ -12,45 +12,53 @@ import {
   onSnapshot, 
   query, 
   orderBy, 
-  serverTimestamp,
-  memoryLocalCache
+  serverTimestamp, 
+  getDocsFromServer, 
+  setDoc 
 } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
-import firebaseConfig from './firebase-applet-config.json' with { type: 'json' };
+import firebaseConfig from './firebase-config.js';
 
 const app = initializeApp(firebaseConfig);
 
-// Use memory-only cache to avoid IndexedDB issues in iframes (AI Studio)
-export const db = initializeFirestore(app, {
-  localCache: memoryLocalCache(),
-  experimentalForceLongPolling: true
-}, firebaseConfig.firestoreDatabaseId);
+// Initialize Firestore - using standard initialization for better compatibility
+export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId || '(default)');
 
-// Test connection
-(async () => {
-  try {
-    if (window.logDebug) window.logDebug("🔥 Testing Firestore connection...");
-    const testDoc = await getDoc(doc(db, 'settings', 'landingPage'));
-    const msg = `🔥 Firestore connection test success: ${testDoc.exists() ? "Config found" : "Config missing"}`;
-    if (window.logDebug) window.logDebug(msg);
-  } catch (e) {
-    console.error("🔥 Firestore connection test failed:", e);
-    if (window.logDebug) window.logDebug(`🔥 Firestore connection test failed: ${e.message}`, true);
-  }
-})();
-
+// Export Auth
 export const auth = getAuth(app);
-export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
-
-// Auth helpers
 export const login = () => signInWithPopup(auth, googleProvider);
 export const logout = () => signOut(auth);
+
+// Export Storage
+export const storage = getStorage(app);
+
+// Re-export Firestore functions
+export {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  serverTimestamp,
+  getDocsFromServer,
+  setDoc,
+  onAuthStateChanged,
+  ref,
+  uploadBytes,
+  uploadBytesResumable,
+  getDownloadURL,
+  deleteObject
+};
 
 // Check if user is admin
 export async function checkIsAdmin(user) {
   if (!user) return false;
-  // Bootstrap admin
   if (user.email === 'canuck.in.japan@gmail.com') return true;
   
   try {

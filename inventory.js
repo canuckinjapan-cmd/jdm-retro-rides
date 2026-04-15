@@ -1,5 +1,16 @@
-import { db, handleFirestoreError } from './firebase.js';
-import { collection, onSnapshot, query, orderBy, getDocs, getDocsFromServer } from 'firebase/firestore';
+import { initialVehicles } from './initialData.js';
+import { 
+  db, 
+  handleFirestoreError, 
+  collection, 
+  onSnapshot, 
+  query, 
+  orderBy, 
+  getDocs, 
+  getDocsFromServer,
+  addDoc,
+  serverTimestamp
+} from './firebase.js';
 
 console.log("📦 inventory.js loaded");
 
@@ -10,7 +21,8 @@ let allVehicles = [];
 // Load Inventory
 async function initInventory() {
   console.log("🚀 Initializing inventory connection...");
-  const q = query(collection(db, 'vehicles'), orderBy('createdAt', 'desc'));
+  // Use 'featured' for sorting as it's guaranteed to be in the initial data
+  const q = query(collection(db, 'vehicles'), orderBy('featured', 'asc'));
   let snapshotReceived = false;
 
   const loaderFallback = document.getElementById('loader-fallback');
@@ -19,7 +31,6 @@ async function initInventory() {
 
   const logToUI = (msg, isError = false) => {
     console.log(msg);
-    if (window.logDebug) window.logDebug(msg, isError);
     if (inventoryLoader) {
       const logLine = document.createElement('p');
       logLine.className = `text-[10px] mt-1 ${isError ? 'text-red-500' : 'text-slate-400'}`;
@@ -46,6 +57,13 @@ async function initInventory() {
     clearTimeout(fallbackTimeout);
     if (loaderFallback) loaderFallback.classList.add('hidden');
     
+    // If we get a real empty snapshot from the server, but we already have fallback data, 
+    // don't overwrite it unless we actually have new data.
+    if (snapshot.empty && allVehicles.length > 0) {
+      logToUI("Snapshot empty, preserving existing fallback data.");
+      return;
+    }
+
     allVehicles = [];
     snapshot.forEach(doc => allVehicles.push({ id: doc.id, ...doc.data() }));
     renderInventory();
@@ -77,17 +95,37 @@ async function initInventory() {
     try {
       // Try getDocs first (allows cache)
       logToUI("Trying getDocs (cache-friendly)...");
-      const snapshot = await getDocs(q);
+      let snapshot = await getDocs(q);
+      
+      // If empty, try without orderBy (maybe some docs missing the field)
+      if (snapshot.empty) {
+        logToUI("Ordered query empty, trying unordered fetch...");
+        snapshot = await getDocs(collection(db, 'vehicles'));
+      }
+
       if (snapshot.size > 0) {
         logToUI(`getDocs success (${snapshot.size} items)`);
         renderData(snapshot);
         return;
       }
       
-      // If getDocs returned empty (maybe cache empty), try getDocsFromServer
+      // If getDocs returned empty, try getDocsFromServer
       logToUI("getDocs empty, trying getDocsFromServer...");
-      const serverSnapshot = await getDocsFromServer(q);
-      logToUI(`getDocsFromServer success (${serverSnapshot.size} items)`);
+      let serverSnapshot = await getDocsFromServer(q);
+      
+      if (serverSnapshot.empty) {
+        logToUI("Ordered server fetch empty, trying unordered server fetch...");
+        serverSnapshot = await getDocsFromServer(collection(db, 'vehicles'));
+      }
+
+      if (snapshot.empty && serverSnapshot.empty) {
+        logToUI("Database is empty. Using initial data as fallback.");
+        allVehicles = [...initialVehicles];
+        renderInventory();
+        return;
+      }
+
+      logToUI(`Server fetch success (${serverSnapshot.size} items)`);
       renderData(serverSnapshot);
     } catch (err) {
       logToUI(`Direct fetch failed: ${err.message}`, true);
@@ -204,7 +242,7 @@ function renderInventory() {
     card.innerHTML = `
       <div class="lg:w-2/5 p-4 space-y-3 bg-gray-50/50 group">
         <div class="aspect-[16/10] overflow-hidden rounded-lg cursor-pointer group/main relative" id="main-img-container-${v.id}">
-          <img id="${v.id}-main-img" class="w-full h-full object-cover transition-transform duration-500 group-hover/main:scale-105" alt="${v.title}" src="${v.images[0]}">
+          <img id="${v.id}-main-img" class="w-full h-full object-cover transition-transform duration-500 group-hover/main:scale-105" alt="${v.title}" src="${v.images[0]}" referrerPolicy="no-referrer">
           <div class="absolute inset-0 pointer-events-none">
             <span class="zoom-icon material-symbols-outlined text-white opacity-0 group-hover:opacity-100 text-3xl transition-opacity absolute bottom-4 right-4">zoom_in</span>
           </div>
@@ -212,7 +250,7 @@ function renderInventory() {
         <div class="grid grid-cols-4 gap-2">
           ${v.images.slice(1, 4).map((img, idx) => `
             <div class="aspect-square rounded border border-outline-variant overflow-hidden cursor-pointer" id="thumb-${v.id}-${idx}">
-              <img class="w-full h-full object-cover" src="${img}">
+              <img class="w-full h-full object-cover" src="${img}" referrerPolicy="no-referrer">
             </div>
           `).join('')}
           ${v.images.length > 4 ? `

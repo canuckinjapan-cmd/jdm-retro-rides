@@ -193,5 +193,21 @@
 </div>
 </div>
 
-  <script type="module" src="./inventory.js?v=20260415"></script>
-</body></html>
+  <script>
+    console.log("📄 inventory.html loaded");
+    if (window.logDebug) window.logDebug("📄 inventory.html loaded");
+  </script>
+  <script type="module" src="./inventory.js?v=20260415_v4"></script>
+  <script>
+    // Safety timeout for inventory loader
+    setTimeout(() => {
+      const loader = document.getElementById('inventory-loader');
+      const fallback = document.getElementById('loader-fallback');
+      if (loader && !loader.classList.contains('hidden')) {
+        console.warn("Safety timeout: Checking inventory loader state.");
+        if (fallback) fallback.classList.remove('hidden');
+      }
+    }, 6000);
+  </script>
+</body>
+</html>

@@ -304,9 +304,9 @@
           <span class="text-sm">Follow us on Facebook</span>
         </button>
         <div class="flex items-center space-x-6">
-          <a class="text-white font-black border-b-2 border-white pb-0.5 font-['Plus_Jakarta_Sans'] text-sm" href="index.html">Home</a>
+          <a class="text-white font-black border-b-2 border-white pb-0.5 font-['Plus_Jakarta_Sans'] text-sm" href="./index.html">Home</a>
           <a class="text-slate-400 hover:text-white hover:underline decoration-2 transition-colors font-['Plus_Jakarta_Sans'] text-sm font-black" href="#about">About</a>
-          <a class="text-slate-400 hover:text-white hover:underline decoration-2 transition-colors font-['Plus_Jakarta_Sans'] text-sm font-black" href="inventory.html">Vehicles</a>
+          <a class="text-slate-400 hover:text-white hover:underline decoration-2 transition-colors font-['Plus_Jakarta_Sans'] text-sm font-black" href="./inventory.html">Vehicles</a>
           <a class="text-slate-400 hover:text-white hover:underline decoration-2 transition-colors font-['Plus_Jakarta_Sans'] text-sm font-black" href="#contact">Contact</a>
         </div>
       </div>
@@ -407,6 +407,27 @@
       }
     }
   </script>
-  <script type="module" src="./landing.js?v=20260415"></script>
+  <script>
+    console.log("📄 index.html loaded");
+    if (window.logDebug) window.logDebug("📄 index.html loaded");
+  </script>
+  <script type="module" src="./landing.js?v=20260415_v5"></script>
+  <script>
+    // Secondary safety timeout to ensure loader is removed in restricted environments
+    setTimeout(() => {
+      const loader = document.getElementById('featured-loader');
+      if (loader && loader.style.display !== 'none') {
+        console.warn("Safety timeout: Removing loader manually.");
+        loader.style.opacity = '0';
+        setTimeout(() => loader.remove(), 500);
+        
+        // Also ensure containers are visible
+        const main = document.getElementById('main-featured-container');
+        const secondary = document.getElementById('secondary-featured-container');
+        if (main) { main.classList.add('active'); main.style.opacity = '1'; }
+        if (secondary) { secondary.classList.add('active'); secondary.style.opacity = '1'; }
+      }
+    }, 6000);
+  </script>
 </body>
 </html>

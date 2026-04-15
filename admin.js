@@ -1,8 +1,30 @@
-import { auth, db, storage, login, logout, checkIsAdmin, handleFirestoreError } from './firebase.js';
+import { 
+  auth, 
+  db, 
+  storage, 
+  login, 
+  logout, 
+  checkIsAdmin, 
+  handleFirestoreError,
+  onAuthStateChanged,
+  collection, 
+  onSnapshot, 
+  query, 
+  orderBy, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc, 
+  getDoc, 
+  serverTimestamp, 
+  getDocs, 
+  setDoc,
+  ref, 
+  uploadBytesResumable, 
+  getDownloadURL, 
+  deleteObject
+} from './firebase.js';
 import { initialVehicles } from './initialData.js';
-import { onAuthStateChanged } from 'firebase/auth';
-import { collection, onSnapshot, query, orderBy, addDoc, updateDoc, deleteDoc, doc, getDoc, serverTimestamp, getDocs, setDoc } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 
 let currentVehicleImages = [];
 let isEditing = false;
@@ -520,6 +542,38 @@ restoreDataBtn.addEventListener('click', async () => {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     alert('Inventory reset and initial data restored successfully!');
+    
+    // Also seed a default landing page config
+    const firstFour = reversedVehicles.slice(0, 4);
+    const landingConfig = {
+      mainFeatured: {
+        vehicleId: '', // Will be filled below
+        photoUrl: firstFour[0].images[0],
+        description: firstFour[0].description.substring(0, 150) + '...'
+      },
+      secondaryFeatured: firstFour.slice(1).map(v => ({
+        vehicleId: '', // Will be filled below
+        photoUrl: v.images[0]
+      })),
+      updatedAt: serverTimestamp()
+    };
+
+    // We need the actual IDs from the newly created docs
+    const newSnapshot = await getDocs(collection(db, 'vehicles'));
+    const newDocs = newSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    
+    // Match by stock number
+    const mainDoc = newDocs.find(d => d.stockNumber === firstFour[0].stockNumber);
+    if (mainDoc) landingConfig.mainFeatured.vehicleId = mainDoc.id;
+    
+    landingConfig.secondaryFeatured = firstFour.slice(1).map(v => {
+      const d = newDocs.find(doc => doc.stockNumber === v.stockNumber);
+      return { vehicleId: d ? d.id : '', photoUrl: v.images[0] };
+    });
+
+    await setDoc(doc(db, 'settings', 'landingPage'), landingConfig);
+    console.log('Default landing page config seeded');
+
   } catch (e) {
     console.error('Error during restore:', e);
     alert('Error restoring data: ' + e.message);

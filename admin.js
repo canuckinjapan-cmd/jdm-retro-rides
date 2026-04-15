@@ -381,6 +381,13 @@ async function deleteVehicle(id) {
 }
 
 const closeModal = () => {
+  if (isUploading) {
+    if (confirm('An upload is in progress. Are you sure you want to cancel and close?')) {
+      uploadAbortController.abort();
+    } else {
+      return;
+    }
+  }
   vehicleModal.classList.add('hidden');
 };
 
@@ -388,101 +395,136 @@ closeModalBtn.addEventListener('click', closeModal);
 cancelModalBtn.addEventListener('click', closeModal);
 
 // Photo Upload
-photoUploadArea.addEventListener('click', () => {
-  console.log("🖱️ Photo upload area clicked");
-  photoInput.click();
+photoUploadArea.addEventListener('click', () => photoInput.click());
+
+// Drag and drop support
+photoUploadArea.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  photoUploadArea.classList.add('border-secondary');
+});
+
+photoUploadArea.addEventListener('dragleave', () => {
+  photoUploadArea.classList.remove('border-secondary');
+});
+
+photoUploadArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  photoUploadArea.classList.remove('border-secondary');
+  const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+  handleFiles(files);
+});
+
+photoInput.addEventListener('change', (e) => {
+  const files = Array.from(e.target.files);
+  handleFiles(files);
 });
 
 let isUploading = false;
+let uploadAbortController = new AbortController();
 
-photoInput.addEventListener('change', async (e) => {
-  try {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) {
-      console.log("⚠️ No files selected");
-      return;
+async function handleFiles(files) {
+  if (files.length === 0) {
+    console.log("⚠️ No files selected");
+    return;
+  }
+
+  // Reset abort controller for new upload batch
+  uploadAbortController = new AbortController();
+  
+  console.log(`📸 Selected ${files.length} files for upload`);
+  isUploading = true;
+  saveVehicleBtn.disabled = true;
+  saveBtnText.textContent = 'Uploading Photos...';
+  photoUploadArea.classList.add('opacity-50', 'pointer-events-none');
+  
+  if (uploadStatus) {
+    uploadStatus.textContent = `Starting upload of ${files.length} photos...`;
+    uploadStatus.classList.remove('hidden');
+  }
+
+  let count = 0;
+  for (const file of files) {
+    if (uploadAbortController.signal.aborted) {
+      console.log("🛑 Upload aborted by user");
+      break;
     }
-
-    console.log(`📸 Selected ${files.length} files for upload`);
-    isUploading = true;
-    saveVehicleBtn.disabled = true;
-    saveBtnText.textContent = 'Uploading Photos...';
-    photoUploadArea.classList.add('opacity-50', 'pointer-events-none');
     
-    if (uploadStatus) {
-      uploadStatus.textContent = `Starting upload of ${files.length} photos...`;
-      uploadStatus.classList.remove('hidden');
-    }
-
-    let count = 0;
-    for (const file of files) {
-      count++;
-      if (uploadStatus) uploadStatus.textContent = `Uploading ${count} of ${files.length}: ${file.name}...`;
+    count++;
+    if (uploadStatus) uploadStatus.textContent = `Uploading ${count} of ${files.length}: ${file.name}...`;
+    
+    const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+    const storageRef = ref(storage, `vehicles/${fileName}`);
+    
+    try {
+      console.log(`📤 Starting resumable upload: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
       
-      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-      const storageRef = ref(storage, `vehicles/${fileName}`);
+      const uploadTask = uploadBytesResumable(storageRef, file, {
+        contentType: file.type || 'image/jpeg'
+      });
+
+      // Handle abort
+      uploadAbortController.signal.addEventListener('abort', () => {
+        uploadTask.cancel();
+      });
+
+      const url = await new Promise((resolve, reject) => {
+        console.log(`🚀 Task created for ${file.name}`);
+        if (uploadStatus) uploadStatus.textContent = `Uploading ${count} of ${files.length}: 0%`;
+
+        // Set a 120-second timeout per file for better reliability
+        const timeout = setTimeout(() => {
+          console.error(`⏰ Timeout for ${file.name}`);
+          uploadTask.cancel();
+          reject(new Error('Upload timed out. Please check your connection.'));
+        }, 120000);
+
+        uploadTask.on('state_changed', 
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log(`📊 ${file.name}: ${progress.toFixed(1)}% done (${snapshot.state})`);
+            if (uploadStatus) uploadStatus.textContent = `Uploading ${count} of ${files.length}: ${progress.toFixed(0)}%`;
+          }, 
+          (error) => {
+            clearTimeout(timeout);
+            reject(error);
+          }, 
+          async () => {
+            clearTimeout(timeout);
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            resolve(downloadURL);
+          }
+        );
+      });
       
-      try {
-        console.log(`📤 Starting resumable upload: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
-        
-        const uploadTask = uploadBytesResumable(storageRef, file, {
-          contentType: file.type || 'image/jpeg'
-        });
-
-        const url = await new Promise((resolve, reject) => {
-          console.log(`🚀 Task created for ${file.name}`);
-          if (uploadStatus) uploadStatus.textContent = `Uploading ${count} of ${files.length}: 0%`;
-
-          // Set a 60-second timeout per file
-          const timeout = setTimeout(() => {
-            console.error(`⏰ Timeout for ${file.name}`);
-            uploadTask.cancel();
-            reject(new Error('Upload timed out. Please check your connection.'));
-          }, 60000);
-
-          uploadTask.on('state_changed', 
-            (snapshot) => {
-              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              console.log(`📊 ${file.name}: ${progress.toFixed(1)}% done (${snapshot.state})`);
-              if (uploadStatus) uploadStatus.textContent = `Uploading ${count} of ${files.length}: ${progress.toFixed(0)}%`;
-            }, 
-            (error) => {
-              clearTimeout(timeout);
-              reject(error);
-            }, 
-            async () => {
-              clearTimeout(timeout);
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              resolve(downloadURL);
-            }
-          );
-        });
-        
-        console.log(`✅ Upload complete: ${file.name}`);
-        currentVehicleImages.push(url);
-        console.log(`🔗 URL generated: ${url}`);
-        renderPhotoPreviews();
-      } catch (err) {
+      console.log(`✅ Upload complete: ${file.name}`);
+      currentVehicleImages.push(url);
+      renderPhotoPreviews();
+    } catch (err) {
+      if (err.code === 'storage/canceled') {
+        console.log(`🚫 Upload canceled for ${file.name}`);
+      } else {
         console.error(`❌ Upload failed for ${file.name}:`, err);
         alert(`Failed to upload ${file.name}: ${err.message}`);
       }
     }
-    if (uploadStatus) uploadStatus.textContent = "All photos uploaded successfully!";
-  } catch (globalErr) {
-    console.error("❌ Global upload error:", globalErr);
-    alert("An unexpected error occurred during photo selection.");
-  } finally {
-    isUploading = false;
-    saveVehicleBtn.disabled = false;
-    saveBtnText.textContent = isEditing ? 'Update Vehicle' : 'Save Vehicle';
-    photoUploadArea.classList.remove('opacity-50', 'pointer-events-none');
-    photoInput.value = ''; // Reset input
-    console.log("🏁 All uploads processed");
-    setTimeout(() => {
-      if (uploadStatus) uploadStatus.classList.add('hidden');
-    }, 3000);
   }
-});
+  
+  if (uploadAbortController.signal.aborted) {
+    if (uploadStatus) uploadStatus.textContent = "Upload canceled.";
+  } else {
+    if (uploadStatus) uploadStatus.textContent = "All photos processed.";
+  }
+  
+  isUploading = false;
+  saveVehicleBtn.disabled = false;
+  saveBtnText.textContent = isEditing ? 'Update Vehicle' : 'Save Vehicle';
+  photoUploadArea.classList.remove('opacity-50', 'pointer-events-none');
+  photoInput.value = ''; // Reset input
+  
+  setTimeout(() => {
+    if (uploadStatus) uploadStatus.classList.add('hidden');
+  }, 3000);
+}
 
 function renderPhotoPreviews() {
   photoPreviewGrid.innerHTML = '';

@@ -318,6 +318,9 @@
             <p class="text-sm font-bold">Click or Drag photos here</p>
             <p class="text-xs text-slate-400">Upload multiple photos from your PC or Smartphone</p>
             <div id="upload-status" class="mt-2 text-xs font-bold text-secondary hidden"></div>
+            <div id="upload-progress-container" class="mt-2 w-full bg-slate-200 rounded-full h-2 hidden">
+              <div id="upload-progress-bar" class="bg-secondary h-2 rounded-full" style="width: 0%"></div>
+            </div>
             <input type="file" id="photo-input" multiple accept="image/*" class="hidden">
           </div>
           <div id="photo-preview-grid" class="grid grid-cols-3 md:grid-cols-5 gap-4">

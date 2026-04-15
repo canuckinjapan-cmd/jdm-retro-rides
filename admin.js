@@ -398,8 +398,14 @@ cancelModalBtn.addEventListener('click', closeModal);
 photoUploadArea.addEventListener('click', () => photoInput.click());
 
 // Drag and drop support
-photoUploadArea.addEventListener('dragover', (e) => {
-  e.preventDefault();
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+  photoUploadArea.addEventListener(eventName, (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, false);
+});
+
+photoUploadArea.addEventListener('dragover', () => {
   photoUploadArea.classList.add('border-secondary');
 });
 
@@ -408,7 +414,6 @@ photoUploadArea.addEventListener('dragleave', () => {
 });
 
 photoUploadArea.addEventListener('drop', (e) => {
-  e.preventDefault();
   photoUploadArea.classList.remove('border-secondary');
   const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
   handleFiles(files);
@@ -437,9 +442,14 @@ async function handleFiles(files) {
   saveBtnText.textContent = 'Uploading Photos...';
   photoUploadArea.classList.add('opacity-50', 'pointer-events-none');
   
+  const uploadProgressBar = document.getElementById('upload-progress-bar');
+  const uploadProgressContainer = document.getElementById('upload-progress-container');
+
   if (uploadStatus) {
     uploadStatus.textContent = `Starting upload of ${files.length} photos...`;
     uploadStatus.classList.remove('hidden');
+    uploadProgressContainer.classList.remove('hidden');
+    uploadProgressBar.style.width = '0%';
   }
 
   let count = 0;
@@ -483,6 +493,7 @@ async function handleFiles(files) {
             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
             console.log(`📊 ${file.name}: ${progress.toFixed(1)}% done (${snapshot.state})`);
             if (uploadStatus) uploadStatus.textContent = `Uploading ${count} of ${files.length}: ${progress.toFixed(0)}%`;
+            if (uploadProgressBar) uploadProgressBar.style.width = `${progress}%`;
           }, 
           (error) => {
             clearTimeout(timeout);
@@ -523,6 +534,7 @@ async function handleFiles(files) {
   
   setTimeout(() => {
     if (uploadStatus) uploadStatus.classList.add('hidden');
+    if (uploadProgressContainer) uploadProgressContainer.classList.add('hidden');
   }, 3000);
 }
 

@@ -1,0 +1,78 @@
+{
+  "entities": {
+    "Vehicle": {
+      "title": "Vehicle Listing",
+      "description": "A car listing in the inventory",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Vehicle name" },
+        "stockNumber": { "type": "string", "description": "Stock number (e.g. J.6511)" },
+        "status": { "type": "string", "enum": ["IN STOCK", "RESERVED", "SOLD"], "description": "Availability status" },
+        "price": { "type": "number", "description": "Price in Yen" },
+        "year": { "type": "number", "description": "Manufacturing year" },
+        "mileage": { "type": "number", "description": "Mileage in km" },
+        "displacement": { "type": "number", "description": "Engine displacement in cc" },
+        "transmission": { "type": "string", "description": "Transmission type (AT/MT)" },
+        "color": { "type": "string", "description": "Exterior color" },
+        "repaired": { "type": "string", "description": "Repair history" },
+        "seatingCapacity": { "type": "number", "description": "Number of seats" },
+        "grade": { "type": "string", "description": "Auction grade" },
+        "driveSystem": { "type": "string", "description": "Drive system (2WD/4WD)" },
+        "images": { "type": "array", "items": { "type": "string" }, "description": "List of image URLs" },
+        "description": { "type": "string", "description": "Detailed description for the overlay" },
+        "featured": { "type": "number", "description": "Featured order" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
+      },
+      "required": ["title", "stockNumber", "status", "price", "year", "images"]
+    },
+    "User": {
+      "title": "User Profile",
+      "description": "User account information and roles",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["admin", "user"] }
+      },
+      "required": ["email", "role"]
+    },
+    "SiteSettings": {
+      "title": "Site Settings",
+      "description": "Global configuration for the website",
+      "type": "object",
+      "properties": {
+        "mainFeatured": {
+          "type": "object",
+          "properties": {
+            "vehicleId": { "type": "string" },
+            "photoUrl": { "type": "string" },
+            "description": { "type": "string" }
+          }
+        },
+        "secondaryFeatured": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "vehicleId": { "type": "string" },
+              "photoUrl": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "/vehicles/{vehicleId}": {
+      "schema": "Vehicle",
+      "description": "Collection of vehicle listings"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Collection of user profiles"
+    },
+    "/settings/{settingId}": {
+      "schema": "SiteSettings",
+      "description": "Collection of site configuration documents"
+    }
+  }
+}

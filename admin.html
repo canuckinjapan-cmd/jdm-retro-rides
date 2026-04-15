@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Admin Dashboard | JDM Retro Rides</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0f172a',
+            secondary: '#3b82f6',
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .loader { border-top-color: #1d4ed8; animation: spinner 1.5s linear infinite; }
+    @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <div id="auth-overlay" class="fixed inset-0 z-[100] bg-white flex items-center justify-center">
+    <div class="text-center p-8 max-w-md w-full">
+      <img alt="Logo" class="h-16 mx-auto mb-6" src="https://danburgess.com/2026-assets/JDM/JDM-Retrorides-logo1.png">
+      <h1 class="text-3xl font-black mb-2">Admin Login</h1>
+      <p class="text-slate-500 mb-8">Secure access for JDM Retro Rides management.</p>
+      <button id="login-btn" class="w-full bg-secondary text-white py-4 rounded-xl font-bold text-lg hover:opacity-90 transition-all flex items-center justify-center gap-3">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" class="w-6 h-6 bg-white rounded-full p-1">
+        Sign in with Google
+      </button>
+      <p id="auth-error" class="mt-4 text-red-500 text-sm hidden"></p>
+    </div>
+  </div>
+
+  <div id="admin-content" class="hidden min-h-screen flex flex-col">
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto w-full px-4 md:px-8 h-20 flex items-center justify-between">
+        <div class="flex items-center gap-8 h-full">
+          <div class="flex items-center gap-3">
+            <img alt="Logo" class="h-8 hidden sm:block" src="https://danburgess.com/2026-assets/JDM/JDM-Retrorides-logo1.png">
+            <span class="font-black text-xl">Admin</span>
+          </div>
+          <div class="hidden sm:flex items-center gap-1 h-full">
+            <button id="tab-inventory" class="h-20 px-6 border-b-4 border-secondary font-bold text-secondary transition-all">Inventory</button>
+            <button id="tab-landing" class="h-20 px-6 border-b-4 border-transparent font-bold text-slate-500 hover:text-slate-900 transition-all">Landing Page</button>
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <span id="user-email" class="text-sm text-slate-500 hidden md:block"></span>
+          <button id="logout-btn" class="text-slate-600 hover:text-red-600 font-bold text-sm">Logout</button>
+        </div>
+      </div>
+    </nav>
+
+    <main id="inventory-section" class="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+        <div>
+          <h2 class="text-2xl md:text-3xl font-black tracking-tight">Inventory Management</h2>
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <p class="text-sm md:text-base text-slate-500">Add, edit, or remove vehicle listings.</p>
+            <button id="restore-data-btn" class="text-slate-400 hover:text-secondary text-[10px] font-bold flex items-center gap-1 transition-colors border border-slate-200 px-2 py-1 rounded-lg">
+              <span class="material-symbols-outlined text-xs">history</span>
+              Restore Initial Data
+            </button>
+          </div>
+        </div>
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+          <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 flex-1 sm:flex-none">
+            <span class="text-[10px] md:text-xs font-bold text-slate-400 uppercase whitespace-nowrap">Sort by:</span>
+            <select id="admin-sort" class="text-sm font-bold border-none focus:ring-0 bg-transparent p-0 pr-8 w-full">
+              <option value="date-new">Date Added (Newest)</option>
+              <option value="date-old">Date Added (Oldest)</option>
+              <option value="stock-asc">Stock # (A-Z)</option>
+              <option value="stock-desc">Stock # (Z-A)</option>
+            </select>
+          </div>
+          <button id="add-vehicle-btn" class="bg-secondary text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-blue-200">
+            <span class="material-symbols-outlined">add</span>
+            Add New Vehicle
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead class="bg-slate-50 border-b border-slate-200 hidden md:table-header-group">
+              <tr>
+                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-1/3">Vehicle</th>
+                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Date Added</th>
+                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Stock #</th>
+                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Price</th>
+                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="vehicle-list" class="divide-y divide-slate-100 block md:table-row-group">
+              <!-- Loaded via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <main id="landing-section" class="hidden flex-1 max-w-7xl mx-auto w-full p-4 md:p-8">
+      <div class="mb-8">
+        <h2 class="text-2xl md:text-3xl font-black tracking-tight">Landing Page Configuration</h2>
+        <p class="text-sm md:text-base text-slate-500">Manage featured vehicles and their display on the home page.</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Main Featured Vehicle -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
+          <h3 class="text-lg font-black flex items-center gap-2">
+            <span class="material-symbols-outlined text-secondary">star</span>
+            Main Featured Vehicle
+          </h3>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-bold mb-1">Select Vehicle</label>
+              <select id="main-featured-id" class="w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary">
+                <option value="">Select a vehicle...</option>
+              </select>
+            </div>
+            
+            <div id="main-photo-selection" class="hidden space-y-2">
+              <label class="block text-sm font-bold mb-1">Select Display Photo</label>
+              <div id="main-photo-grid" class="grid grid-cols-4 gap-2">
+                <!-- Photos loaded via JS -->
+              </div>
+              <input type="hidden" id="main-featured-photo">
+            </div>
+
+            <div>
+              <label class="block text-sm font-bold mb-1">One-line Description</label>
+              <input type="text" id="main-featured-desc" class="w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary" placeholder="e.g. A legendary icon of Japanese automotive history.">
+            </div>
+          </div>
+        </div>
+
+        <!-- Secondary Featured Vehicles -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
+          <h3 class="text-lg font-black flex items-center gap-2">
+            <span class="material-symbols-outlined text-secondary">grid_view</span>
+            Secondary Featured (3 Vehicles)
+          </h3>
+          
+          <div id="secondary-featured-list" class="space-y-6">
+            <!-- Slot 1 -->
+            <div class="secondary-slot space-y-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-black text-slate-400 uppercase">Slot 1 (Left)</span>
+              </div>
+              <select class="secondary-vehicle-id w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary" data-slot="0">
+                <option value="">Select a vehicle...</option>
+              </select>
+              <div class="secondary-photo-selection hidden space-y-2">
+                <div class="secondary-photo-grid grid grid-cols-4 gap-2"></div>
+                <input type="hidden" class="secondary-vehicle-photo">
+              </div>
+            </div>
+            <!-- Slot 2 -->
+            <div class="secondary-slot space-y-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-black text-slate-400 uppercase">Slot 2 (Middle)</span>
+              </div>
+              <select class="secondary-vehicle-id w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary" data-slot="1">
+                <option value="">Select a vehicle...</option>
+              </select>
+              <div class="secondary-photo-selection hidden space-y-2">
+                <div class="secondary-photo-grid grid grid-cols-4 gap-2"></div>
+                <input type="hidden" class="secondary-vehicle-photo">
+              </div>
+            </div>
+            <!-- Slot 3 -->
+            <div class="secondary-slot space-y-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-black text-slate-400 uppercase">Slot 3 (Right)</span>
+              </div>
+              <select class="secondary-vehicle-id w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary" data-slot="2">
+                <option value="">Select a vehicle...</option>
+              </select>
+              <div class="secondary-photo-selection hidden space-y-2">
+                <div class="secondary-photo-grid grid grid-cols-4 gap-2"></div>
+                <input type="hidden" class="secondary-vehicle-photo">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-8 flex justify-end">
+        <button id="save-landing-btn" class="bg-secondary text-white px-10 py-4 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-blue-200 flex items-center gap-2">
+          Save Landing Page Changes
+          <div id="landing-save-loader" class="hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full loader"></div>
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Vehicle Modal -->
+  <div id="vehicle-modal" class="fixed inset-0 z-[110] bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+      <div class="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
+        <h3 id="modal-title" class="text-2xl font-black">Add New Vehicle</h3>
+        <button id="close-modal" class="material-symbols-outlined text-slate-400 hover:text-slate-900">close</button>
+      </div>
+      
+      <form id="vehicle-form" class="flex-1 overflow-y-auto p-8 space-y-8">
+        <input type="hidden" id="vehicle-id">
+        
+        <!-- Section 1: Identity -->
+        <div class="space-y-4">
+          <h4 class="text-xs font-bold text-secondary uppercase tracking-widest">Identity & Status</h4>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="md:col-span-2">
+              <label class="block text-sm font-bold mb-1">Vehicle Name</label>
+              <input type="text" id="v-title" required class="w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary" placeholder="e.g. 1999 Nissan Skyline GTR">
+            </div>
+            <div>
+              <label class="block text-sm font-bold mb-1">Stock Number</label>
+              <input type="text" id="v-stock" required class="w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary" placeholder="e.g. J.6511">
+            </div>
+            <div>
+              <label class="block text-sm font-bold mb-1">Status</label>
+              <select id="v-status" required class="w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary">
+                <option value="IN STOCK">IN STOCK</option>
+                <option value="RESERVED">RESERVED</option>
+                <option value="SOLD">SOLD</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-bold mb-1">Price (¥)</label>
+              <input type="number" id="v-price" required class="w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary" placeholder="8200000">
+            </div>
+            <div>
+              <label class="block text-sm font-bold mb-1">Featured Order</label>
+              <input type="number" id="v-featured" class="w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary" placeholder="1">
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Specs -->
+        <div class="space-y-4">
+          <h4 class="text-xs font-bold text-secondary uppercase tracking-widest">Technical Specifications</h4>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <label class="block text-sm font-bold mb-1">Year</label>
+              <input type="number" id="v-year" required class="w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary" placeholder="1999">
+            </div>
+            <div>
+              <label class="block text-sm font-bold mb-1">Mileage (km)</label>
+              <input type="number" id="v-mileage" class="w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary" placeholder="89000">
+            </div>
+            <div>
+              <label class="block text-sm font-bold mb-1">Displacement (cc)</label>
+              <input type="number" id="v-displacement" class="w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary" placeholder="2600">
+            </div>
+            <div>
+              <label class="block text-sm font-bold mb-1">Transmission</label>
+              <select id="v-transmission" class="w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary">
+                <option value="MT">MT</option>
+                <option value="AT">AT</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-bold mb-1">Color</label>
+              <input type="text" id="v-color" class="w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary" placeholder="Bayside Blue">
+            </div>
+            <div>
+              <label class="block text-sm font-bold mb-1">Drive System</label>
+              <select id="v-drive" class="w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary">
+                <option value="2WD">2WD</option>
+                <option value="4WD">4WD</option>
+                <option value="AWD">AWD</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-bold mb-1">Repaired</label>
+              <select id="v-repaired" class="w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary">
+                <option value="No repair history">No repair history</option>
+                <option value="Repair history">Repair history</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-bold mb-1">Seating</label>
+              <input type="number" id="v-seating" class="w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary" placeholder="4">
+            </div>
+            <div>
+              <label class="block text-sm font-bold mb-1">Grade</label>
+              <input type="text" id="v-grade" class="w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary" placeholder="4.5 / B">
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Description -->
+        <div class="space-y-4">
+          <h4 class="text-xs font-bold text-secondary uppercase tracking-widest">Additional Information</h4>
+          <div>
+            <label class="block text-sm font-bold mb-1">Description (Paragraphs for View Details)</label>
+            <textarea id="v-description" rows="4" class="w-full rounded-xl border-slate-200 focus:ring-secondary focus:border-secondary" placeholder="Add detailed information about the vehicle..."></textarea>
+          </div>
+        </div>
+
+        <!-- Section 4: Photos -->
+        <div class="space-y-4">
+          <h4 class="text-xs font-bold text-secondary uppercase tracking-widest">Photos (First is Featured)</h4>
+          <div id="photo-upload-area" class="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center hover:border-secondary transition-colors cursor-pointer group">
+            <span class="material-symbols-outlined text-4xl text-slate-300 group-hover:text-secondary mb-2">cloud_upload</span>
+            <p class="text-sm font-bold">Click or Drag photos here</p>
+            <p class="text-xs text-slate-400">Upload multiple photos from your PC or Smartphone</p>
+            <div id="upload-status" class="mt-2 text-xs font-bold text-secondary hidden"></div>
+            <input type="file" id="photo-input" multiple accept="image/*" class="hidden">
+          </div>
+          <div id="photo-preview-grid" class="grid grid-cols-3 md:grid-cols-5 gap-4">
+            <!-- Previews -->
+          </div>
+        </div>
+      </form>
+
+      <div class="px-8 py-6 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-4">
+        <button id="cancel-modal" class="px-6 py-3 font-bold text-slate-500 hover:text-slate-900">Cancel</button>
+        <button id="save-vehicle-btn" class="bg-secondary text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition-all flex items-center gap-2">
+          <span id="save-btn-text">Save Vehicle</span>
+          <div id="save-loader" class="hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full loader"></div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./admin.js"></script>
+</body>
+</html>

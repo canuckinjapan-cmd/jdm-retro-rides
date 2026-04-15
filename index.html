@@ -2,8 +2,12 @@
 <html class="light" lang="en">
 <head>
   <meta charset="utf-8">
+  <!-- Deployment Sync: 2026-04-12 -->
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <title>JDM Retro Rides | Import Professionals</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
@@ -55,6 +59,27 @@
     }
     .parallax-bg { will-change: transform; transition: transform 0.1s ease-out; }
     .hero-text-shadow { text-shadow: 1px 2px 4px rgba(0, 0, 0, 0.5); }
+    .btn-scroll-container {
+      position: relative;
+      display: inline-block;
+      overflow: hidden;
+      height: 1.5em;
+      line-height: 1.5em;
+      vertical-align: middle;
+    }
+    .btn-scroll-text {
+      display: block;
+      transition: transform 0.4s cubic-bezier(0.76, 0, 0.24, 1);
+    }
+    .btn-scroll-text-hover {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+    }
+    .group:hover .btn-scroll-text {
+      transform: translateY(-100%);
+    }
   </style>
 </head>
 <body class="bg-surface text-on-surface antialiased">
@@ -65,10 +90,15 @@
         <div class="text-2xl font-black text-black font-headline tracking-tight">JDM Retro Rides</div>
       </div>
       <div class="hidden md:flex items-center space-x-8">
-        <a class="text-blue-700 font-bold border-b-2 border-blue-700 pb-1 font-headline" href="index.html">Home</a>
-        <a class="text-slate-700 hover:text-black hover:underline decoration-black underline-offset-4 transition-colors font-headline" href="#about">About</a>
-        <a class="text-slate-700 hover:text-black hover:underline decoration-black underline-offset-4 transition-colors font-headline" href="inventory.html">Vehicles</a>
-        <a class="bg-secondary text-on-secondary px-6 py-2.5 rounded-lg font-bold hover:opacity-80 transition-opacity" href="#contact">Contact</a>
+        <a id="nav-home" class="nav-link text-black font-black border-b-2 border-secondary pb-1 font-headline transition-all hover:text-secondary" href="index.html">Home</a>
+        <a id="nav-about" class="nav-link text-black font-black hover:border-b-2 hover:border-secondary pb-1 transition-all font-headline hover:text-secondary" href="#about">About</a>
+        <a id="nav-vehicles" class="nav-link text-black font-black hover:border-b-2 hover:border-secondary pb-1 transition-all font-headline hover:text-secondary" href="inventory.html">Vehicles</a>
+        <a class="bg-secondary text-on-secondary px-6 py-2.5 rounded-lg font-bold hover:opacity-80 transition-opacity group" href="#contact">
+          <span class="btn-scroll-container">
+            <span class="btn-scroll-text">Contact</span>
+            <span class="btn-scroll-text btn-scroll-text-hover">Contact</span>
+          </span>
+        </a>
       </div>
       <div class="md:hidden"><button id="mobile-menu-btn" class="material-symbols-outlined text-3xl">menu</button></div>
     </div>
@@ -91,8 +121,20 @@
         <h1 class="text-5xl md:text-8xl font-extrabold text-white leading-[1.1] tracking-tighter mb-2 hero-text-shadow">JDM Retro Rides</h1>
         <p class="text-xl md:text-4xl text-slate-200 font-medium tracking-wide mb-8 hero-text-shadow">Specialist Supplier of Cars from Japan</p>
         <div class="flex flex-wrap gap-4">
-          <a href="inventory.html" class="bg-secondary text-white px-8 py-4 rounded-lg font-bold text-lg hover:opacity-90 hover:ring-1 hover:ring-blue-400 transition-all flex items-center group">Browse Vehicles<span class="material-symbols-outlined ml-2 group-hover:translate-x-1 transition-transform">arrow_forward</span></a>
-          <a href="#contact" class="bg-secondary text-white px-8 py-4 rounded-lg font-bold text-lg hover:opacity-90 hover:ring-1 hover:ring-blue-400 transition-all flex items-center group">Contact<span class="w-0 overflow-hidden group-hover:w-6 group-hover:ml-2 transition-all duration-300 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm320-280L160-640v400h640v-400L480-440Zm0-80 320-200H160l320 200ZM160-640v-80 480-400Z"/></svg></span></a>
+          <a href="inventory.html" class="bg-secondary text-white px-8 py-4 rounded-lg font-bold text-lg hover:opacity-90 hover:ring-1 hover:ring-blue-400 transition-all flex items-center group">
+            <span class="btn-scroll-container">
+              <span class="btn-scroll-text">Browse Vehicles</span>
+              <span class="btn-scroll-text btn-scroll-text-hover">Browse Vehicles</span>
+            </span>
+            <span class="material-symbols-outlined ml-2 group-hover:translate-x-1 transition-transform">arrow_forward</span>
+          </a>
+          <a href="#contact" class="bg-secondary text-white px-8 py-4 rounded-lg font-bold text-lg hover:opacity-90 hover:ring-1 hover:ring-blue-400 transition-all flex items-center group">
+            <span class="btn-scroll-container">
+              <span class="btn-scroll-text">Contact</span>
+              <span class="btn-scroll-text btn-scroll-text-hover">Contact</span>
+            </span>
+            <span class="w-0 overflow-hidden group-hover:w-6 group-hover:ml-2 transition-all duration-300 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm320-280L160-640v400h640v-400L480-440Zm0-80 320-200H160l320 200ZM160-640v-80 480-400Z"/></svg></span>
+          </a>
         </div>
       </div>
     </div>
@@ -106,19 +148,25 @@
           <div class="h-1 w-full bg-gradient-to-r from-secondary to-transparent"></div>
         </div>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
-        <div class="md:col-span-8 reveal">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-8 relative min-h-[400px]">
+        <!-- Loading State -->
+        <div id="featured-loader" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-surface/80 backdrop-blur-sm transition-opacity duration-500">
+          <div class="w-10 h-10 border-4 border-slate-200 border-t-secondary rounded-full animate-spin mb-4"></div>
+          <p class="text-slate-500 font-bold text-sm tracking-widest uppercase">Loading Featured...</p>
+        </div>
+
+        <div id="main-featured-container" data-dynamic="true" class="md:col-span-8 reveal opacity-0 transition-opacity duration-500">
           <div class="group relative aspect-video overflow-hidden rounded-xl shadow-sm">
-            <img alt="Fairlady Z" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://danburgess.com/2026-assets/JDM/1971-240Z01.jpg" referrerPolicy="no-referrer">
+            <img id="main-featured-img" alt="Featured Vehicle" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" referrerPolicy="no-referrer">
             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity hidden md:block"></div>
-            <div class="absolute bottom-0 left-0 p-10 text-white hidden md:block">
+            <div class="absolute bottom-0 left-0 p-10 text-white hidden md:block hero-text-shadow">
               <span class="bg-tertiary-container text-white text-[10px] font-black px-2 py-0.5 rounded-sm uppercase tracking-widest">Featured</span>
-              <h3 class="text-4xl font-bold mb-2">1971 Nissan Fairlady Z</h3>
-              <p class="text-white/70 font-light max-w-md">This right-hand drive 1971 Nissan Fairlady Z is waiting for a new owner. <a class="no-underline hover:underline hover:text-white font-bold" href="inventory.html#fairlady">Details</a></p>
+              <h3 id="main-featured-title" class="text-4xl font-bold mb-2">Loading...</h3>
+              <p id="main-featured-desc-text" class="text-white font-medium max-w-md"></p>
             </div>
           </div>
           <div class="md:hidden mt-3">
-            <p class="text-on-surface font-bold text-lg">1971 Nissan Fairlady Z - <a class="text-secondary hover:underline" href="inventory.html#fairlady">Details</a></p>
+            <p class="text-on-surface font-bold text-lg"><span id="main-featured-title-mobile">Loading...</span> - <a id="main-featured-link-mobile" class="text-secondary hover:underline decoration-2 font-bold" href="inventory.html">Details</a></p>
           </div>
         </div>
         <div class="md:col-span-4 group relative overflow-hidden rounded-xl bg-surface-container-low p-8 hidden md:flex flex-col justify-between border border-transparent hover:border-outline-variant/30 transition-all reveal">
@@ -126,17 +174,8 @@
           <p>We help customers access Japanese car auctions, find their ideal vehicles, place bids and handle the entire import process.</p></div>
           <a class="flex items-center text-secondary font-bold group-hover:translate-x-2 transition-transform" href="inventory.html">See more vehicles<span class="material-symbols-outlined ml-2">trending_flat</span></a>
         </div>
-        <div class="md:col-span-4 reveal">
-          <div class="group relative aspect-video overflow-hidden rounded-xl shadow-sm mb-3"><img alt="Skyline" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://danburgess.com/2026-assets/JDM/1999GTR-blue06.jpg" referrerPolicy="no-referrer"></div>
-          <p class="text-on-surface font-bold text-lg">1999 Nissan Skyline GTR R34 - <a class="text-secondary hover:underline" href="inventory.html#skyline">Details</a></p>
-        </div>
-        <div class="md:col-span-4 reveal">
-          <div class="group relative aspect-video overflow-hidden rounded-xl shadow-sm mb-3"><img alt="MR2" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://danburgess.com/2026-assets/JDM/1996-ToyotaMR201.jpg" referrerPolicy="no-referrer"></div>
-          <p class="text-on-surface font-bold text-lg">1996 Toyota MR2 - <a class="text-secondary hover:underline" href="inventory.html#mr2">Details</a></p>
-        </div>
-        <div class="md:col-span-4 reveal">
-          <div class="group relative aspect-video overflow-hidden rounded-xl shadow-sm mb-3"><img alt="Supra" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://danburgess.com/2026-assets/JDM/1997Supra-wht01.jpg" referrerPolicy="no-referrer"></div>
-          <p class="text-on-surface font-bold text-lg">1997 Toyota Supra - <a class="text-secondary hover:underline" href="inventory.html#supra">Details</a></p>
+        <div id="secondary-featured-container" data-dynamic="true" class="contents opacity-0 transition-opacity duration-500">
+          <!-- Dynamic Content -->
         </div>
       </div>
     </div>
@@ -258,25 +297,25 @@
           <img alt="Logo" class="h-8 w-auto" src="https://danburgess.com/2026-assets/JDM/JDM-Retrorides-logo1.png">
           <div class="text-xl font-black text-white font-['Plus_Jakarta_Sans'] tracking-tight">JDM Retro Rides</div>
         </div>
-        <button class="flex items-center gap-3 bg-white text-slate-900 px-6 py-2 rounded-full font-black font-['Plus_Jakarta_Sans'] tracking-tight transition-all duration-300 hover:bg-secondary hover:text-white hover:ring-2 hover:ring-secondary group">
+        <button class="flex items-center gap-3 bg-white text-secondary px-6 py-2 rounded-full font-black font-['Plus_Jakarta_Sans'] tracking-tight transition-all duration-300 hover:bg-secondary hover:text-white hover:ring-1 hover:ring-blue-400 group">
           <svg class="h-5 w-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
           </svg>
           <span class="text-sm">Follow us on Facebook</span>
         </button>
         <div class="flex items-center space-x-6">
-          <a class="text-blue-500 font-bold border-b-2 border-blue-500 pb-0.5 font-['Plus_Jakarta_Sans'] text-sm" href="index.html">Home</a>
-          <a class="text-slate-400 hover:text-white hover:underline transition-colors font-['Plus_Jakarta_Sans'] text-sm font-semibold" href="#about">About</a>
-          <a class="text-slate-400 hover:text-white hover:underline transition-colors font-['Plus_Jakarta_Sans'] text-sm font-semibold" href="inventory.html">Vehicles</a>
-          <a class="text-slate-400 hover:text-white hover:underline transition-colors font-['Plus_Jakarta_Sans'] text-sm font-semibold" href="#contact">Contact</a>
+          <a class="text-white font-black border-b-2 border-white pb-0.5 font-['Plus_Jakarta_Sans'] text-sm" href="index.html">Home</a>
+          <a class="text-slate-400 hover:text-white hover:underline decoration-2 transition-colors font-['Plus_Jakarta_Sans'] text-sm font-black" href="#about">About</a>
+          <a class="text-slate-400 hover:text-white hover:underline decoration-2 transition-colors font-['Plus_Jakarta_Sans'] text-sm font-black" href="inventory.html">Vehicles</a>
+          <a class="text-slate-400 hover:text-white hover:underline decoration-2 transition-colors font-['Plus_Jakarta_Sans'] text-sm font-black" href="#contact">Contact</a>
         </div>
       </div>
       <div class="h-px w-full bg-slate-800"></div>
       <div class="relative flex flex-col md:flex-row items-center justify-center py-4">
         <div class="md:absolute md:left-0 flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6 mb-4 md:mb-0">
-          <a class="text-slate-500 hover:text-white transition-colors font-['Plus_Jakarta_Sans'] text-[10px] uppercase tracking-widest" href="#">Privacy policy</a>
-          <a class="text-slate-500 hover:text-white transition-colors font-['Plus_Jakarta_Sans'] text-[10px] uppercase tracking-widest" href="#">Terms of service</a>
-          <a class="text-slate-500 hover:text-white transition-colors font-['Plus_Jakarta_Sans'] text-[10px] uppercase tracking-widest" href="#">Cookie settings</a>
+          <a class="text-slate-500 hover:text-white hover:underline decoration-2 transition-colors font-['Plus_Jakarta_Sans'] text-[10px] uppercase tracking-widest" href="#">Privacy policy</a>
+          <a class="text-slate-500 hover:text-white hover:underline decoration-2 transition-colors font-['Plus_Jakarta_Sans'] text-[10px] uppercase tracking-widest" href="#">Terms of service</a>
+          <a class="text-slate-500 hover:text-white hover:underline decoration-2 transition-colors font-['Plus_Jakarta_Sans'] text-[10px] uppercase tracking-widest" href="#">Cookie settings</a>
         </div>
         <div class="text-slate-500 font-['Plus_Jakarta_Sans'] text-xs text-center">© 2026 JDM Retro Rides. All rights reserved.</div>
       </div>
@@ -286,12 +325,39 @@
     </button>
   </footer>
 
+  <div id="debug-overlay" class="fixed bottom-4 left-4 z-[200] bg-black/80 text-white text-[10px] p-2 rounded hidden max-w-xs overflow-auto max-h-40 pointer-events-none">
+    <p class="font-bold border-b border-white/20 mb-1">Debug Logs</p>
+    <div id="debug-content"></div>
+  </div>
+
   <script>
+    // Global debug logger
+    window.logDebug = (msg, isError = false) => {
+      const debugOverlay = document.getElementById('debug-overlay');
+      const debugContent = document.getElementById('debug-content');
+      if (debugContent) {
+        const line = document.createElement('p');
+        line.className = isError ? 'text-red-400' : 'text-green-400';
+        line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        debugContent.appendChild(line);
+      }
+      console.log(`[DEBUG] ${msg}`);
+      
+      // Show overlay if there's an error or if explicitly requested via URL
+      if (isError || new URLSearchParams(window.location.search).has('debug')) {
+        if (debugOverlay) debugOverlay.classList.remove('hidden');
+      }
+    };
+
     document.getElementById('mobile-menu-btn').addEventListener('click', () => document.getElementById('mobile-menu').classList.toggle('hidden'));
     document.getElementById('back-to-top').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     
     const heroImg = document.getElementById('hero-img');
     const reveals = document.querySelectorAll('.reveal');
+    
+    // Reveal on scroll
+    const navLinks = document.querySelectorAll('.nav-link');
+    const sections = document.querySelectorAll('header, section[id]');
     
     const onScroll = () => {
       // Parallax effect
@@ -302,7 +368,29 @@
       
       // Reveal on scroll
       reveals.forEach(el => {
+        // Skip dynamic elements until they are loaded
+        if (el.dataset.dynamic === "true" && el.dataset.loaded !== "true") return;
+        
         if (el.getBoundingClientRect().top < window.innerHeight - 150) el.classList.add('active');
+      });
+
+      // Active Nav State
+      let current = "";
+      sections.forEach((section) => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.clientHeight;
+        if (scrollY >= sectionTop - 150) {
+          current = section.getAttribute("id") || "home";
+        }
+      });
+
+      navLinks.forEach((link) => {
+        link.classList.remove("border-b-2", "border-secondary", "text-secondary");
+        link.classList.add("hover:border-b-2", "hover:border-secondary", "hover:text-secondary");
+        if (link.getAttribute("href").includes(current) || (current === "home" && link.id === "nav-home")) {
+          link.classList.add("border-b-2", "border-secondary", "text-secondary");
+          link.classList.remove("hover:border-b-2", "hover:border-secondary", "hover:text-secondary");
+        }
       });
     };
     
@@ -319,5 +407,6 @@
       }
     }
   </script>
+  <script type="module" src="./landing.js?v=20260415"></script>
 </body>
 </html>

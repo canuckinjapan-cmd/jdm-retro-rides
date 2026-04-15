@@ -467,6 +467,7 @@ async function handleFiles(files) {
     
     try {
       console.log(`📤 Starting resumable upload: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
+      window.logDebug(`📤 Starting upload: ${file.name}`);
       
       const uploadTask = uploadBytesResumable(storageRef, file, {
         contentType: file.type || 'image/jpeg'
@@ -481,22 +482,26 @@ async function handleFiles(files) {
         console.log(`🚀 Task created for ${file.name}`);
         if (uploadStatus) uploadStatus.textContent = `Uploading ${count} of ${files.length}: 0%`;
 
-        // Set a 120-second timeout per file for better reliability
+        // Set a 300-second timeout per file for better reliability
         const timeout = setTimeout(() => {
           console.error(`⏰ Timeout for ${file.name}`);
+          window.logDebug(`⏰ Timeout for ${file.name}`, true);
           uploadTask.cancel();
           reject(new Error('Upload timed out. Please check your connection.'));
-        }, 120000);
+        }, 300000);
 
         uploadTask.on('state_changed', 
           (snapshot) => {
             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
             console.log(`📊 ${file.name}: ${progress.toFixed(1)}% done (${snapshot.state})`);
+            window.logDebug(`📊 ${file.name}: ${progress.toFixed(1)}% (${snapshot.state})`);
             if (uploadStatus) uploadStatus.textContent = `Uploading ${count} of ${files.length}: ${progress.toFixed(0)}%`;
             if (uploadProgressBar) uploadProgressBar.style.width = `${progress}%`;
           }, 
           (error) => {
             clearTimeout(timeout);
+            console.error(`❌ Upload task error for ${file.name}:`, error);
+            window.logDebug(`❌ Upload error: ${file.name} - ${error.message}`, true);
             reject(error);
           }, 
           async () => {

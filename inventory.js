@@ -147,11 +147,17 @@ function renderInventory() {
   const sortYearSelect = document.getElementById('sort-year');
   const sortPriceSelect = document.getElementById('sort-price');
   const sortDisplacementSelect = document.getElementById('sort-displacement');
-  const filterStock = document.getElementById('filter-stock').checked;
+  const filterStockInput = document.getElementById('filter-stock');
+  
+  if (!sortYearSelect || !sortPriceSelect || !sortDisplacementSelect || !filterStockInput) {
+    console.warn("⚠️ Some filter elements not found, skipping render.");
+    return;
+  }
 
   const sortYear = sortYearSelect.value;
   const sortPrice = sortPriceSelect.value;
   const sortDisplacement = sortDisplacementSelect.value;
+  const filterStock = filterStockInput.checked;
 
   let filtered = [...allVehicles];
 

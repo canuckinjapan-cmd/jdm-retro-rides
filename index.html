@@ -349,6 +349,25 @@
       }
     };
 
+    // Global error handler
+    window.onerror = (msg, url, lineNo, columnNo, error) => {
+      const string = msg.toLowerCase();
+      const substring = "script error";
+      if (string.indexOf(substring) > -1){
+        window.logDebug('Script Error: See Browser Console for Detail', true);
+      } else {
+        const message = [
+          'Message: ' + msg,
+          'URL: ' + url,
+          'Line: ' + lineNo,
+          'Column: ' + columnNo,
+          'Error object: ' + JSON.stringify(error)
+        ].join(' - ');
+        window.logDebug(message, true);
+      }
+      return false;
+    };
+
     document.getElementById('mobile-menu-btn').addEventListener('click', () => document.getElementById('mobile-menu').classList.toggle('hidden'));
     document.getElementById('back-to-top').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     

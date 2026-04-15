@@ -31,6 +31,12 @@ async function initLanding() {
     }
     if (linkMobile) linkMobile.href = `inventory.html#${vMain.stockNumber}`;
 
+    // Also update the container visibility
+    if (mainContainer) {
+      mainContainer.classList.remove('opacity-0');
+      mainContainer.classList.add('active');
+    }
+
     // Render Secondary
     if (secondaryContainer) {
       secondaryContainer.innerHTML = '';

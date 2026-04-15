@@ -193,7 +193,49 @@
 </div>
 </div>
 
+  <div id="debug-overlay" class="fixed bottom-4 left-4 z-[200] bg-black/80 text-white text-[10px] p-2 rounded hidden max-w-xs overflow-auto max-h-40 pointer-events-none">
+    <p class="font-bold border-b border-white/20 mb-1">Debug Logs</p>
+    <div id="debug-content"></div>
+  </div>
+
   <script>
+    // Global debug logger
+    window.logDebug = (msg, isError = false) => {
+      const debugOverlay = document.getElementById('debug-overlay');
+      const debugContent = document.getElementById('debug-content');
+      if (debugContent) {
+        const line = document.createElement('p');
+        line.className = isError ? 'text-red-400' : 'text-green-400';
+        line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        debugContent.appendChild(line);
+      }
+      console.log(`[DEBUG] ${msg}`);
+      
+      // Show overlay if there's an error or if explicitly requested via URL
+      if (isError || new URLSearchParams(window.location.search).has('debug')) {
+        if (debugOverlay) debugOverlay.classList.remove('hidden');
+      }
+    };
+
+    // Global error handler
+    window.onerror = (msg, url, lineNo, columnNo, error) => {
+      const string = msg.toLowerCase();
+      const substring = "script error";
+      if (string.indexOf(substring) > -1){
+        window.logDebug('Script Error: See Browser Console for Detail', true);
+      } else {
+        const message = [
+          'Message: ' + msg,
+          'URL: ' + url,
+          'Line: ' + lineNo,
+          'Column: ' + columnNo,
+          'Error object: ' + JSON.stringify(error)
+        ].join(' - ');
+        window.logDebug(message, true);
+      }
+      return false;
+    };
+
     console.log("📄 inventory.html loaded");
     if (window.logDebug) window.logDebug("📄 inventory.html loaded");
   </script>

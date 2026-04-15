@@ -21,7 +21,6 @@ let allVehicles = [];
 // Load Inventory
 async function initInventory() {
   console.log("🚀 Initializing inventory connection...");
-  // Use 'featured' for sorting as it's guaranteed to be in the initial data
   const q = query(collection(db, 'vehicles'), orderBy('featured', 'asc'));
   let snapshotReceived = false;
 
@@ -40,25 +39,12 @@ async function initInventory() {
   };
 
   logToUI(`Initializing... Host: ${window.location.hostname}`);
-  logToUI(`Iframe: ${window.self !== window.top}`);
-
-  // Show fallback after 3 seconds
-  const fallbackTimeout = setTimeout(() => {
-    if (!snapshotReceived && loaderFallback) {
-      console.warn("⚠️ Snapshot timeout reached. Showing manual fetch option.");
-      loaderFallback.classList.remove('hidden');
-      logToUI("Timeout reached. Please try 'Force Manual Fetch' or reload.");
-    }
-  }, 3000);
 
   const renderData = (snapshot) => {
     console.log(`✅ Data received. Count: ${snapshot.size}, Source: ${snapshot.metadata.fromCache ? 'Cache' : 'Server'}`);
     snapshotReceived = true;
-    clearTimeout(fallbackTimeout);
     if (loaderFallback) loaderFallback.classList.add('hidden');
     
-    // If we get a real empty snapshot from the server, but we already have fallback data, 
-    // don't overwrite it unless we actually have new data.
     if (snapshot.empty && allVehicles.length > 0) {
       logToUI("Snapshot empty, preserving existing fallback data.");
       return;
@@ -69,7 +55,12 @@ async function initInventory() {
     renderInventory();
   };
 
-  // 1. Try real-time listener
+  // 1. Render fallback immediately
+  logToUI("Rendering fallback data immediately...");
+  allVehicles = [...initialVehicles];
+  renderInventory();
+
+  // 2. Try real-time listener
   logToUI("Starting real-time listener...");
   try {
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -77,7 +68,6 @@ async function initInventory() {
       renderData(snapshot);
     }, (err) => {
       logToUI(`onSnapshot Error: ${err.message}`, true);
-      // If onSnapshot fails immediately, try a direct fetch
       if (!snapshotReceived) {
         logToUI("Attempting immediate direct fetch...");
         attemptFetch(1);
@@ -93,11 +83,9 @@ async function initInventory() {
     logToUI(`Direct fetch attempt ${attempt}...`);
     
     try {
-      // Try getDocs first (allows cache)
       logToUI("Trying getDocs (cache-friendly)...");
       let snapshot = await getDocs(q);
       
-      // If empty, try without orderBy (maybe some docs missing the field)
       if (snapshot.empty) {
         logToUI("Ordered query empty, trying unordered fetch...");
         snapshot = await getDocs(collection(db, 'vehicles'));
@@ -109,7 +97,6 @@ async function initInventory() {
         return;
       }
       
-      // If getDocs returned empty, try getDocsFromServer
       logToUI("getDocs empty, trying getDocsFromServer...");
       let serverSnapshot = await getDocsFromServer(q);
       
@@ -118,41 +105,16 @@ async function initInventory() {
         serverSnapshot = await getDocsFromServer(collection(db, 'vehicles'));
       }
 
-      if (snapshot.empty && serverSnapshot.empty) {
-        logToUI("Database is empty. Using initial data as fallback.");
-        allVehicles = [...initialVehicles];
-        renderInventory();
-        return;
+      if (serverSnapshot.size > 0) {
+        logToUI(`Server fetch success (${serverSnapshot.size} items)`);
+        renderData(serverSnapshot);
+      } else {
+        logToUI("Database is empty or unreachable. Keeping fallback data.");
       }
-
-      logToUI(`Server fetch success (${serverSnapshot.size} items)`);
-      renderData(serverSnapshot);
     } catch (err) {
       logToUI(`Direct fetch failed: ${err.message}`, true);
-      
-      // If it's a "permission-denied" or "unavailable", it might be the iframe
-      if (err.message.includes("unavailable") || err.message.includes("network")) {
-        logToUI("Network/Iframe restriction detected. Retrying with delay...");
-      }
-
       if (attempt < 3) {
         setTimeout(() => attemptFetch(attempt + 1), 2000);
-      } else {
-        logToUI("All connection attempts failed. This is likely a browser security restriction on cross-origin iframes.", true);
-        if (inventoryLoader) {
-          const errorDiv = document.createElement('div');
-          errorDiv.className = "mt-4 p-4 bg-red-50 rounded-lg border border-red-100 text-center";
-          errorDiv.innerHTML = `
-            <p class="text-red-700 font-bold text-sm">Connection Blocked</p>
-            <p class="text-red-600 text-[10px] mt-1">The browser is blocking the database connection inside this preview.</p>
-            <div class="flex flex-col gap-2 mt-3">
-              <button onclick="window.open(window.location.href, '_blank')" class="bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-xs">Open in New Tab</button>
-              <button onclick="location.reload()" class="bg-white text-red-600 border border-red-600 px-4 py-2 rounded-lg font-bold text-xs">Reload Preview</button>
-            </div>
-            <p class="text-[8px] text-slate-400 mt-2">Error: ${err.message}</p>
-          `;
-          inventoryLoader.appendChild(errorDiv);
-        }
       }
     }
   };

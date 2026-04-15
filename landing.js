@@ -7,6 +7,7 @@ async function initLanding() {
   const secondaryContainer = document.getElementById('secondary-featured-container');
 
   const renderInitialLanding = () => {
+    if (!initialVehicles || initialVehicles.length === 0) return;
     const vMain = initialVehicles[0];
     const vSecondary = initialVehicles.slice(1, 4);
 
@@ -48,20 +49,6 @@ async function initLanding() {
   };
 
   const showContent = () => {
-    // If data hasn't been rendered yet, set some defaults so it doesn't say "Loading..."
-    const titleMobile = document.getElementById('main-featured-title-mobile');
-    if (titleMobile && (titleMobile.textContent === "Loading..." || titleMobile.textContent === "")) {
-      titleMobile.textContent = "Featured Vehicle";
-    }
-    const title = document.getElementById('main-featured-title');
-    if (title && (title.textContent === "Loading..." || title.textContent === "")) {
-      title.textContent = "Featured Vehicle";
-    }
-    const desc = document.getElementById('main-featured-desc-text');
-    if (desc && (desc.textContent === "Loading..." || desc.textContent === "")) {
-      desc.textContent = "Explore our legendary JDM collection.";
-    }
-
     if (loader) loader.classList.add('opacity-0');
     setTimeout(() => {
       if (loader) loader.remove();
@@ -75,23 +62,19 @@ async function initLanding() {
         secondaryContainer.classList.remove('opacity-0');
         secondaryContainer.classList.add('active');
       }
-      // Trigger a scroll event to catch any elements that should now reveal
       window.dispatchEvent(new Event('scroll'));
     }, 500);
   };
 
-  // Fallback timeout: if data doesn't load in 4 seconds, show whatever we have
-  const fallbackTimeout = setTimeout(() => {
-    console.warn("Landing page data fetch timed out. Showing fallback content.");
-    renderInitialLanding();
-    showContent();
-  }, 4000);
+  // 1. Render fallback immediately so the user sees something
+  renderInitialLanding();
+  showContent();
 
+  // 2. Try to fetch real data from Firestore
   try {
     const configSnap = await getDoc(doc(db, 'settings', 'landingPage'));
     if (!configSnap.exists()) {
-      renderInitialLanding();
-      showContent();
+      console.log("No landing page config found in Firestore, using fallback.");
       return;
     }
 
@@ -104,10 +87,7 @@ async function initLanding() {
       });
     }
 
-    if (vehicleIds.length === 0) {
-      showContent();
-      return;
-    }
+    if (vehicleIds.length === 0) return;
 
     // Fetch all needed vehicles
     const vehiclesData = {};
@@ -120,7 +100,7 @@ async function initLanding() {
       }
     });
 
-    // Render Main Featured
+    // Render Main Featured (Overwrite fallback)
     if (config.mainFeatured?.vehicleId && vehiclesData[config.mainFeatured.vehicleId]) {
       const v = vehiclesData[config.mainFeatured.vehicleId];
       const img = document.getElementById('main-featured-img');
@@ -129,40 +109,24 @@ async function initLanding() {
       const desc = document.getElementById('main-featured-desc-text');
       const linkMobile = document.getElementById('main-featured-link-mobile');
 
-      if (img) {
-        img.src = config.mainFeatured.photoUrl || v.images[0];
-        img.referrerPolicy = "no-referrer";
-      }
+      if (img) img.src = config.mainFeatured.photoUrl || v.images[0];
       if (title) title.textContent = v.title;
       if (titleMobile) titleMobile.textContent = v.title;
-      
       if (desc) {
         desc.innerHTML = `${config.mainFeatured.description || ''} <a id="main-featured-link" class="text-white no-underline hover:underline decoration-2 font-bold" href="inventory.html#${v.stockNumber}">Details</a>`;
-        // Update font weight for the description text
-        desc.classList.remove('font-light', 'text-white/70');
-        desc.classList.add('font-medium', 'text-white');
-        
-        // Ensure parent has drop shadow
-        const container = desc.closest('.md\\:block');
-        if (container) container.classList.add('hero-text-shadow');
       }
-      if (linkMobile) {
-        linkMobile.href = `inventory.html#${v.stockNumber}`;
-        linkMobile.classList.add('font-bold');
-      }
+      if (linkMobile) linkMobile.href = `inventory.html#${v.stockNumber}`;
     }
 
-    // Render Secondary Featured
-    if (secondaryContainer && config.secondaryFeatured) {
-      // Clear existing slots if we have data
+    // Render Secondary Featured (Overwrite fallback)
+    if (secondaryContainer && config.secondaryFeatured && config.secondaryFeatured.length > 0) {
       secondaryContainer.innerHTML = '';
-      
       config.secondaryFeatured.forEach(item => {
         const v = vehiclesData[item.vehicleId];
         if (!v) return;
 
         const slot = document.createElement('div');
-        slot.className = 'md:col-span-4 reveal active'; // Add active class so they display immediately
+        slot.className = 'md:col-span-4 reveal active';
         slot.innerHTML = `
           <div class="group relative aspect-video overflow-hidden rounded-xl shadow-sm mb-3">
             <img alt="${v.title}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="${item.photoUrl || v.images[0]}" referrerPolicy="no-referrer">
@@ -173,12 +137,8 @@ async function initLanding() {
       });
     }
 
-    clearTimeout(fallbackTimeout);
-    showContent();
-
   } catch (err) {
-    console.error("Error initializing landing page:", err);
-    showContent();
+    console.warn("Error fetching landing page data from Firestore:", err);
   }
 }
 

@@ -115,11 +115,13 @@ async function initInventory() {
     logToUI(`Direct fetch attempt ${attempt}...`);
     updateStatus(false, `Retrying Cloud... (${attempt})`);
     
-    const fetchWithTimeout = async (queryObj, label, timeoutMs = 8000) => {
+    const fetchWithTimeout = async (queryOrPromise, label, timeoutMs = 8000) => {
       logToUI(`Trying ${label}...`);
       try {
+        // If it's already a promise (like from getDocsFromServer), use it. Otherwise, wrap getDocs.
+        const p = (queryOrPromise instanceof Promise) ? queryOrPromise : getDocs(queryOrPromise);
         const result = await Promise.race([
-          getDocs(queryObj),
+          p,
           new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} Timeout`)), timeoutMs))
         ]);
         logToUI(`${label} success: ${result.size} docs`);
@@ -170,6 +172,8 @@ async function initInventory() {
   // Diagnostic: Log the database ID and check connectivity
   import('./firebase-config.js').then(async config => {
     const dbId = config.default.firestoreDatabaseId || '(default)';
+    const projId = config.default.projectId;
+    logToUI(`Project ID: ${projId}`);
     logToUI(`Using Database: ${dbId}`);
     
     // Test connection by trying to fetch a non-existent doc

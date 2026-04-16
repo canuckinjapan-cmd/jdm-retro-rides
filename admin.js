@@ -654,6 +654,9 @@ checkDefaultDbBtn.addEventListener('click', async () => {
   
   try {
     const app = getApp();
+    const projId = firebaseConfig.projectId;
+    console.log(`Checking Default DB for Project: ${projId}`);
+    
     // Use a unique name for the diagnostic instance to avoid conflicts
     const diagDb = initializeFirestore(app, { 
       databaseId: '(default)',

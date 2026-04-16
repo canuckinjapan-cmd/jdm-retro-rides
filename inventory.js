@@ -28,6 +28,13 @@ async function initInventory() {
   const forceFetchBtn = document.getElementById('force-fetch-btn');
   const inventoryLoader = document.getElementById('inventory-loader');
 
+  // Add a connection status indicator to the UI
+  const statusIndicator = document.createElement('div');
+  statusIndicator.id = 'db-status';
+  statusIndicator.className = 'fixed bottom-4 right-4 z-[100] bg-black/80 text-white text-[10px] px-2 py-1 rounded-full flex items-center gap-2';
+  statusIndicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Connecting to Cloud...';
+  document.body.appendChild(statusIndicator);
+
   const logToUI = (msg, isError = false) => {
     console.log(msg);
     if (inventoryLoader) {
@@ -36,13 +43,41 @@ async function initInventory() {
       logLine.textContent = `> ${msg}`;
       inventoryLoader.appendChild(logLine);
     }
+    // Also log to debug overlay if available
+    if (window.logDebug) window.logDebug(msg, isError);
   };
 
-  logToUI(`Initializing... Host: ${window.location.hostname}`);
+  const updateStatus = (connected, msg) => {
+    if (statusIndicator) {
+      statusIndicator.innerHTML = `
+        <span class="w-2 h-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}"></span> 
+        <span>${msg}</span>
+        <button id="manual-sync-btn" class="ml-2 bg-white/20 hover:bg-white/40 px-2 py-0.5 rounded text-[8px] transition-colors">Sync Now</button>
+      `;
+      
+      const syncBtn = document.getElementById('manual-sync-btn');
+      if (syncBtn) {
+        syncBtn.onclick = (e) => {
+          e.stopPropagation();
+          logToUI("Manual sync requested...");
+          attemptFetch(1);
+        };
+      }
+
+      if (connected) {
+        setTimeout(() => {
+          if (statusIndicator) statusIndicator.classList.add('opacity-0');
+        }, 5000);
+      } else {
+        statusIndicator.classList.remove('opacity-0');
+      }
+    }
+  };
 
   const renderData = (snapshot) => {
     console.log(`✅ Data received. Count: ${snapshot.size}, Source: ${snapshot.metadata.fromCache ? 'Cache' : 'Server'}`);
     snapshotReceived = true;
+    updateStatus(true, "Cloud Connected");
     if (loaderFallback) loaderFallback.classList.add('hidden');
     
     if (snapshot.empty && allVehicles.length > 0) {
@@ -51,36 +86,23 @@ async function initInventory() {
     }
 
     allVehicles = [];
-    snapshot.forEach(doc => allVehicles.push({ id: doc.id, ...doc.data() }));
-    renderInventory();
-  };
-
-  // 1. Render fallback immediately
-  logToUI("Rendering fallback data immediately...");
-  allVehicles = [...initialVehicles];
-  renderInventory();
-
-  // 2. Try real-time listener
-  logToUI("Starting real-time listener...");
-  try {
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      logToUI(`Snapshot received (${snapshot.size} items)`);
-      renderData(snapshot);
-    }, (err) => {
-      logToUI(`onSnapshot Error: ${err.message}`, true);
-      if (!snapshotReceived) {
-        logToUI("Attempting immediate direct fetch...");
-        attemptFetch(1);
-      }
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      allVehicles.push({ id: doc.id, ...data });
     });
-  } catch (e) {
-    logToUI(`onSnapshot setup failed: ${e.message}`, true);
-    attemptFetch(1);
-  }
+    console.log("🚗 Received vehicles:", allVehicles.map(v => v.title).join(', '));
+    logToUI(`Received ${allVehicles.length} vehicles from Cloud.`);
+    
+    // Decouple rendering from the Firebase callback to avoid potential iframe stack issues
+    setTimeout(() => {
+      renderInventory();
+    }, 0);
+  };
 
   const attemptFetch = async (attempt = 1) => {
     if (snapshotReceived) return;
     logToUI(`Direct fetch attempt ${attempt}...`);
+    updateStatus(false, `Retrying Cloud... (${attempt})`);
     
     try {
       logToUI("Trying getDocs (cache-friendly)...");
@@ -118,6 +140,32 @@ async function initInventory() {
       }
     }
   };
+
+  logToUI(`Initializing... Host: ${window.location.hostname}`);
+
+  // 1. Render fallback immediately
+  logToUI("Rendering fallback data immediately...");
+  allVehicles = [...initialVehicles];
+  renderInventory();
+
+  // 2. Try real-time listener
+  logToUI("Starting real-time listener...");
+  try {
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      logToUI(`Snapshot received (${snapshot.size} items)`);
+      renderData(snapshot);
+    }, (err) => {
+      logToUI(`onSnapshot Error: ${err.message}`, true);
+      updateStatus(false, `Cloud Error: ${err.message}`);
+      if (!snapshotReceived) {
+        logToUI("Attempting immediate direct fetch...");
+        attemptFetch(1);
+      }
+    });
+  } catch (e) {
+    logToUI(`onSnapshot setup failed: ${e.message}`, true);
+    attemptFetch(1);
+  }
 
   if (forceFetchBtn) {
     forceFetchBtn.addEventListener('click', () => {

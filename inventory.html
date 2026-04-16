@@ -224,12 +224,20 @@
       if (string.indexOf(substring) > -1){
         window.logDebug('Script Error: See Browser Console for Detail', true);
       } else {
+        let errorDetails = 'N/A';
+        try {
+          if (error) {
+            errorDetails = error.stack || error.message || String(error);
+          }
+        } catch (e) {
+          errorDetails = 'Could not stringify error';
+        }
         const message = [
           'Message: ' + msg,
           'URL: ' + url,
           'Line: ' + lineNo,
           'Column: ' + columnNo,
-          'Error object: ' + JSON.stringify(error)
+          'Details: ' + errorDetails
         ].join(' - ');
         window.logDebug(message, true);
       }

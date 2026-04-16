@@ -1,7 +1,8 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js';
 import { 
-  getFirestore, 
+  getFirestore,
+  initializeFirestore,
   collection, 
   doc, 
   getDoc, 
@@ -21,8 +22,14 @@ import firebaseConfig from './firebase-config.js';
 
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firestore - using standard initialization for better compatibility
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId || '(default)');
+// Initialize Firestore with Long Polling and memory-only cache for better iframe compatibility
+export const db = initializeFirestore(app, {
+  databaseId: firebaseConfig.firestoreDatabaseId || '(default)',
+  experimentalForceLongPolling: true,
+  localCache: {
+    kind: 'memory'
+  }
+});
 
 // Export Auth
 export const auth = getAuth(app);

@@ -85,9 +85,14 @@ async function initInventory() {
     updateStatus(true, "Cloud Connected");
     if (loaderFallback) loaderFallback.classList.add('hidden');
     
-    if (snapshot.empty && allVehicles.length > 4) {
-      logToUI("Snapshot empty but we have data, ignoring empty update.");
-      return;
+    if (snapshot.empty) {
+      if (allVehicles.length > 4) {
+        logToUI("Snapshot empty but we have data, ignoring empty update.");
+        return;
+      } else {
+        logToUI("Cloud is empty. Keeping initial demo data.");
+        return;
+      }
     }
 
     const newVehicles = [];
@@ -152,9 +157,19 @@ async function initInventory() {
 
   logToUI(`v${VERSION} Initializing... Host: ${window.location.hostname}`);
   
-  // Diagnostic: Log the database ID
-  import('./firebase-config.js').then(config => {
-    logToUI(`Using Database: ${config.default.firestoreDatabaseId || '(default)'}`);
+  // Diagnostic: Log the database ID and check connectivity
+  import('./firebase-config.js').then(async config => {
+    const dbId = config.default.firestoreDatabaseId || '(default)';
+    logToUI(`Using Database: ${dbId}`);
+    
+    // Test connection by trying to fetch a non-existent doc
+    try {
+      const testRef = doc(db, '_internal_', 'connection_test');
+      await getDoc(testRef);
+      logToUI("Cloud connectivity verified.");
+    } catch (e) {
+      logToUI(`Connectivity Test Failed: ${e.message}`, true);
+    }
   }).catch(err => {
     logToUI(`Config Load Error: ${err.message}`, true);
   });

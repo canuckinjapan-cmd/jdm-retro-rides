@@ -193,8 +193,11 @@
 </div>
 </div>
 
-  <div id="debug-overlay" class="fixed bottom-4 left-4 z-[200] bg-black/80 text-white text-[10px] p-2 rounded max-w-xs overflow-auto max-h-40 pointer-events-none">
-    <p class="font-bold border-b border-white/20 mb-1">Debug Logs</p>
+  <div id="debug-overlay" class="fixed bottom-4 left-4 z-[200] bg-black/80 text-white text-[10px] p-2 rounded max-w-xs overflow-auto max-h-40 pointer-events-auto">
+    <div class="flex justify-between items-center border-b border-white/20 mb-1 pb-1">
+      <p class="font-bold">Debug Logs</p>
+      <button id="debug-list-btn" class="bg-white/20 hover:bg-white/40 px-2 py-0.5 rounded text-[8px]">List Data</button>
+    </div>
     <div id="debug-content"></div>
   </div>
 

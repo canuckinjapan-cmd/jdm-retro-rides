@@ -117,10 +117,17 @@ async function initInventory() {
     
     const fetchWithTimeout = async (queryObj, label, timeoutMs = 8000) => {
       logToUI(`Trying ${label}...`);
-      return Promise.race([
-        getDocs(queryObj),
-        new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} Timeout`)), timeoutMs))
-      ]);
+      try {
+        const result = await Promise.race([
+          getDocs(queryObj),
+          new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} Timeout`)), timeoutMs))
+        ]);
+        logToUI(`${label} success: ${result.size} docs`);
+        return result;
+      } catch (err) {
+        logToUI(`${label} failed: ${err.message}`, true);
+        throw err;
+      }
     };
 
     try {
@@ -168,7 +175,10 @@ async function initInventory() {
     // Test connection by trying to fetch a non-existent doc
     try {
       const testRef = doc(db, '_internal_', 'connection_test');
-      await getDoc(testRef);
+      await Promise.race([
+        getDoc(testRef),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Conn Test Timeout")), 5000))
+      ]);
       logToUI("Cloud connectivity verified.");
     } catch (e) {
       logToUI(`Connectivity Test Failed: ${e.message}`, true);
@@ -544,5 +554,15 @@ document.addEventListener('keydown', (e) => {
     overlays.forEach(overlay => overlay.classList.add('hidden'));
   }
 });
+
+// Debug: List Data button
+const debugListBtn = document.getElementById('debug-list-btn');
+if (debugListBtn) {
+  debugListBtn.onclick = () => {
+    console.log(`Current allVehicles count: ${allVehicles.length}`);
+    console.table(allVehicles.map(v => ({ id: v.id, title: v.title, stock: v.stockNumber })));
+    alert(`Current vehicles in memory: ${allVehicles.length}\nCheck console for table.`);
+  };
+}
 
 initInventory();

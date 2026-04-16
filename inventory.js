@@ -9,7 +9,9 @@ import {
   getDocs, 
   getDocsFromServer,
   addDoc,
-  serverTimestamp
+  serverTimestamp,
+  doc,
+  getDoc
 } from './firebase.js';
 
 console.log("📦 inventory.js loaded");
@@ -156,6 +158,7 @@ async function initInventory() {
   };
 
   logToUI(`v${VERSION} Initializing... Host: ${window.location.hostname}`);
+  logToUI(`Initial vehicles count: ${initialVehicles.length}`);
   
   // Diagnostic: Log the database ID and check connectivity
   import('./firebase-config.js').then(async config => {
@@ -218,6 +221,9 @@ async function initInventory() {
 }
 
 function renderInventory() {
+  console.log(`🎨 renderInventory called. allVehicles count: ${allVehicles.length}`);
+  if (window.logDebug) window.logDebug(`Rendering inventory (${allVehicles.length} vehicles)`);
+  
   const sortYearSelect = document.getElementById('sort-year');
   const sortPriceSelect = document.getElementById('sort-price');
   const sortDisplacementSelect = document.getElementById('sort-displacement');

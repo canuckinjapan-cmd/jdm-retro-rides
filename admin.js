@@ -22,7 +22,9 @@ import {
   ref, 
   uploadBytesResumable, 
   getDownloadURL, 
-  deleteObject
+  deleteObject,
+  initializeFirestore,
+  getApp
 } from './firebase.js';
 import { initialVehicles } from './initialData.js';
 
@@ -35,6 +37,7 @@ const adminContent = document.getElementById('admin-content');
 const loginBtn = document.getElementById('login-btn');
 const logoutBtn = document.getElementById('logout-btn');
 const restoreDataBtn = document.getElementById('restore-data-btn');
+const checkDefaultDbBtn = document.getElementById('check-default-db-btn');
 const userEmailSpan = document.getElementById('user-email');
 const authError = document.getElementById('auth-error');
 
@@ -639,6 +642,38 @@ restoreDataBtn.addEventListener('click', async () => {
   } finally {
     restoreDataBtn.disabled = false;
     restoreDataBtn.innerHTML = '<span class="material-symbols-outlined text-sm">history</span> Restore Initial Data';
+  }
+});
+
+// Diagnostic: Check Default Database
+checkDefaultDbBtn.addEventListener('click', async () => {
+  if (!confirm('This will check the "(default)" database for any existing vehicle listings. Continue?')) return;
+  
+  checkDefaultDbBtn.disabled = true;
+  checkDefaultDbBtn.textContent = 'Checking...';
+  
+  try {
+    const app = getApp();
+    // Use a unique name for the diagnostic instance to avoid conflicts
+    const diagDb = initializeFirestore(app, { 
+      databaseId: '(default)',
+      experimentalForceLongPolling: true 
+    }, `diag-${Date.now()}`);
+    
+    const snapshot = await getDocs(collection(diagDb, 'vehicles'));
+    
+    if (snapshot.empty) {
+      alert('The "(default)" database is also empty. No vehicles found there.');
+    } else {
+      const titles = snapshot.docs.map(d => d.data().title).join(', ');
+      alert(`Found ${snapshot.size} vehicles in Default DB: ${titles}\n\nIf your Suzuki Jimny is in this list, it means it was saved to the wrong database. Please let me know and I can help you migrate it!`);
+    }
+  } catch (e) {
+    console.error('Error checking default DB:', e);
+    alert('Error checking default DB: ' + e.message);
+  } finally {
+    checkDefaultDbBtn.disabled = false;
+    checkDefaultDbBtn.innerHTML = '<span class="material-symbols-outlined text-xs">search</span> Check Default DB';
   }
 });
 

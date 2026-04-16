@@ -1,4 +1,4 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js';
+import { initializeApp, getApp } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js';
 import { 
   getFirestore,
@@ -60,7 +60,9 @@ export {
   uploadBytes,
   uploadBytesResumable,
   getDownloadURL,
-  deleteObject
+  deleteObject,
+  initializeFirestore,
+  getApp
 };
 
 // Check if user is admin

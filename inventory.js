@@ -20,7 +20,8 @@ let allVehicles = [];
 
 // Load Inventory
 async function initInventory() {
-  console.log("🚀 Initializing inventory connection...");
+  const VERSION = "1.6";
+  console.log(`🚀 Initializing inventory v${VERSION}...`);
   const q = query(collection(db, 'vehicles'), orderBy('featured', 'asc'));
   let snapshotReceived = false;
 
@@ -36,15 +37,16 @@ async function initInventory() {
   document.body.appendChild(statusIndicator);
 
   const logToUI = (msg, isError = false) => {
-    console.log(msg);
+    const time = new Date().toLocaleTimeString();
+    const fullMsg = `[${time}] ${msg}`;
+    console.log(fullMsg);
     if (inventoryLoader) {
       const logLine = document.createElement('p');
       logLine.className = `text-[10px] mt-1 ${isError ? 'text-red-500' : 'text-slate-400'}`;
-      logLine.textContent = `> ${msg}`;
+      logLine.textContent = `> ${fullMsg}`;
       inventoryLoader.appendChild(logLine);
     }
-    // Also log to debug overlay if available
-    if (window.logDebug) window.logDebug(msg, isError);
+    if (window.logDebug) window.logDebug(fullMsg, isError);
   };
 
   const updateStatus = (connected, msg) => {
@@ -75,92 +77,101 @@ async function initInventory() {
   };
 
   const renderData = (snapshot) => {
-    console.log(`✅ Data received. Count: ${snapshot.size}, Source: ${snapshot.metadata.fromCache ? 'Cache' : 'Server'}`);
+    const count = snapshot.size;
+    const source = snapshot.metadata.fromCache ? 'Cache' : 'Server';
+    logToUI(`✅ Data received. Count: ${count}, Source: ${source}`);
+    
     snapshotReceived = true;
     updateStatus(true, "Cloud Connected");
     if (loaderFallback) loaderFallback.classList.add('hidden');
     
-    if (snapshot.empty && allVehicles.length > 0) {
-      logToUI("Snapshot empty, preserving existing fallback data.");
+    if (snapshot.empty && allVehicles.length > 4) {
+      logToUI("Snapshot empty but we have data, ignoring empty update.");
       return;
     }
 
-    allVehicles = [];
+    const newVehicles = [];
     snapshot.forEach(doc => {
-      const data = doc.data();
-      allVehicles.push({ id: doc.id, ...data });
+      newVehicles.push({ id: doc.id, ...doc.data() });
     });
-    console.log("🚗 Received vehicles:", allVehicles.map(v => v.title).join(', '));
-    logToUI(`Received ${allVehicles.length} vehicles from Cloud.`);
     
-    // Decouple rendering from the Firebase callback to avoid potential iframe stack issues
+    allVehicles = newVehicles;
+    logToUI(`Titles: ${allVehicles.map(v => v.title).join(', ')}`);
+    
     setTimeout(() => {
       renderInventory();
     }, 0);
   };
 
   const attemptFetch = async (attempt = 1) => {
-    if (snapshotReceived) return;
+    if (snapshotReceived && attempt === 1) return;
     logToUI(`Direct fetch attempt ${attempt}...`);
     updateStatus(false, `Retrying Cloud... (${attempt})`);
     
+    const fetchWithTimeout = async (queryObj, label, timeoutMs = 8000) => {
+      logToUI(`Trying ${label}...`);
+      return Promise.race([
+        getDocs(queryObj),
+        new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} Timeout`)), timeoutMs))
+      ]);
+    };
+
     try {
-      logToUI("Trying getDocs (cache-friendly)...");
-      let snapshot = await getDocs(q);
+      let snapshot = await fetchWithTimeout(q, "getDocs (ordered)");
       
       if (snapshot.empty) {
-        logToUI("Ordered query empty, trying unordered fetch...");
-        snapshot = await getDocs(collection(db, 'vehicles'));
+        logToUI("Ordered query empty, trying unordered...");
+        snapshot = await fetchWithTimeout(collection(db, 'vehicles'), "getDocs (unordered)");
       }
 
       if (snapshot.size > 0) {
-        logToUI(`getDocs success (${snapshot.size} items)`);
         renderData(snapshot);
         return;
       }
       
-      logToUI("getDocs empty, trying getDocsFromServer...");
-      let serverSnapshot = await getDocsFromServer(q);
+      logToUI("getDocs empty, trying Server fetch...");
+      let serverSnapshot = await fetchWithTimeout(getDocsFromServer(q), "getDocsFromServer (ordered)");
       
       if (serverSnapshot.empty) {
-        logToUI("Ordered server fetch empty, trying unordered server fetch...");
-        serverSnapshot = await getDocsFromServer(collection(db, 'vehicles'));
+        serverSnapshot = await fetchWithTimeout(getDocsFromServer(collection(db, 'vehicles')), "getDocsFromServer (unordered)");
       }
 
       if (serverSnapshot.size > 0) {
-        logToUI(`Server fetch success (${serverSnapshot.size} items)`);
         renderData(serverSnapshot);
       } else {
-        logToUI("Database is empty or unreachable. Keeping fallback data.");
+        logToUI("No vehicles found in Cloud.");
       }
     } catch (err) {
-      logToUI(`Direct fetch failed: ${err.message}`, true);
+      logToUI(`Fetch failed: ${err.message}`, true);
       if (attempt < 3) {
+        logToUI(`Retrying in 2s...`);
         setTimeout(() => attemptFetch(attempt + 1), 2000);
       }
     }
   };
 
-  logToUI(`Initializing... Host: ${window.location.hostname}`);
+  logToUI(`v${VERSION} Initializing... Host: ${window.location.hostname}`);
+  
+  // Diagnostic: Log the database ID
+  import('./firebase-config.js').then(config => {
+    logToUI(`Using Database: ${config.default.firestoreDatabaseId || '(default)'}`);
+  }).catch(err => {
+    logToUI(`Config Load Error: ${err.message}`, true);
+  });
 
-  // 1. Render fallback immediately
-  logToUI("Rendering fallback data immediately...");
   allVehicles = [...initialVehicles];
   renderInventory();
 
   // 2. Try real-time listener
   logToUI("Starting real-time listener...");
   try {
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    onSnapshot(q, (snapshot) => {
       logToUI(`Snapshot received (${snapshot.size} items)`);
       renderData(snapshot);
     }, (err) => {
       logToUI(`onSnapshot Error: ${err.message}`, true);
       updateStatus(false, `Cloud Error: ${err.message}`);
-      if (!snapshotReceived) {
-        logToUI("Attempting immediate direct fetch...");
-        attemptFetch(1);
-      }
+      if (!snapshotReceived) attemptFetch(1);
     });
   } catch (e) {
     logToUI(`onSnapshot setup failed: ${e.message}`, true);

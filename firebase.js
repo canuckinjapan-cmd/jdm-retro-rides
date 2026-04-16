@@ -15,21 +15,21 @@ import {
   orderBy, 
   serverTimestamp, 
   getDocsFromServer, 
-  setDoc 
+  setDoc,
+  writeBatch,
+  disableNetwork,
+  enableNetwork,
+  terminate,
+  enableIndexedDbPersistence
 } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js';
 import { getStorage, ref, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js';
 import firebaseConfig from './firebase-config.js';
+export { firebaseConfig };
 
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firestore with Long Polling and memory-only cache for better iframe compatibility
-export const db = initializeFirestore(app, {
-  databaseId: firebaseConfig.firestoreDatabaseId || '(default)',
-  experimentalForceLongPolling: true,
-  localCache: {
-    kind: 'memory'
-  }
-});
+// Initialize Firestore using getFirestore for standard behavior
+export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
 // Export Auth
 export const auth = getAuth(app);
@@ -39,6 +39,11 @@ export const logout = () => signOut(auth);
 
 // Export Storage
 export const storage = getStorage(app);
+
+// Enable Persistence for better iframe/offline support
+enableIndexedDbPersistence(db).catch((err) => {
+  console.warn("Firestore Persistence Error:", err.code);
+});
 
 // Re-export Firestore functions
 export {
@@ -55,6 +60,7 @@ export {
   serverTimestamp,
   getDocsFromServer,
   setDoc,
+  writeBatch,
   onAuthStateChanged,
   ref,
   uploadBytes,
@@ -62,7 +68,10 @@ export {
   getDownloadURL,
   deleteObject,
   initializeFirestore,
-  getApp
+  getApp,
+  disableNetwork,
+  enableNetwork,
+  terminate
 };
 
 // Check if user is admin
@@ -82,11 +91,11 @@ export async function checkIsAdmin(user) {
 // Firestore error handler
 export function handleFirestoreError(error, operation, path) {
   const errInfo = {
-    error: error.message,
+    message: error.message || String(error),
     operation,
     path,
     auth: auth.currentUser ? { uid: auth.currentUser.uid, email: auth.currentUser.email } : 'not authenticated'
   };
-  console.error('Firestore Error:', JSON.stringify(errInfo));
+  console.error('Firestore Error:', errInfo);
   throw new Error(JSON.stringify(errInfo));
 }

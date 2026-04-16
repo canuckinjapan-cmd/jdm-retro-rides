@@ -18,13 +18,18 @@ import {
   getDoc, 
   serverTimestamp, 
   getDocs, 
+  getDocsFromServer,
   setDoc,
   ref, 
   uploadBytesResumable, 
   getDownloadURL, 
   deleteObject,
   initializeFirestore,
-  getApp
+  getApp,
+  disableNetwork,
+  enableNetwork,
+  terminate,
+  firebaseConfig
 } from './firebase.js';
 import { initialVehicles } from './initialData.js';
 
@@ -38,6 +43,13 @@ const loginBtn = document.getElementById('login-btn');
 const logoutBtn = document.getElementById('logout-btn');
 const restoreDataBtn = document.getElementById('restore-data-btn');
 const checkDefaultDbBtn = document.getElementById('check-default-db-btn');
+const migrateDataBtn = document.getElementById('migrate-data-btn');
+const clearCacheBtn = document.getElementById('clear-cache-btn');
+const clearAllDataBtn = document.getElementById('clear-all-data-btn');
+const hardResetBtn = document.getElementById('hard-reset-btn');
+const forceSyncBtn = document.getElementById('force-sync-btn');
+const debugInfoBtn = document.getElementById('debug-info-btn');
+const connectionStatus = document.getElementById('connection-status');
 const userEmailSpan = document.getElementById('user-email');
 const authError = document.getElementById('auth-error');
 
@@ -219,6 +231,7 @@ let allVehiclesAdmin = [];
 // Auth Listener
 onAuthStateChanged(auth, async (user) => {
   if (user) {
+    updateStatus(true);
     const isAdmin = await checkIsAdmin(user);
     if (isAdmin) {
       authOverlay.classList.add('hidden');
@@ -238,10 +251,13 @@ onAuthStateChanged(auth, async (user) => {
 
 loginBtn.addEventListener('click', async () => {
   console.log("Login button clicked");
+  if (window.logDebug) window.logDebug("Attempting Google Login...");
   try {
-    await login();
+    const result = await login();
+    if (window.logDebug) window.logDebug(`Login successful: ${result.user.email}`);
   } catch (e) {
     console.error("Login error:", e);
+    if (window.logDebug) window.logDebug(`Login failed: ${e.message}`, true);
     authError.textContent = e.message;
     authError.classList.remove('hidden');
   }
@@ -250,86 +266,135 @@ loginBtn.addEventListener('click', async () => {
 logoutBtn.addEventListener('click', () => logout());
 
 // Load Vehicles
-function loadVehicles() {
+async function loadVehicles(forceServer = false) {
   vehicleList.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400 font-bold">Loading inventory...</td></tr>';
-  const q = query(collection(db, 'vehicles'), orderBy('createdAt', 'desc'));
-  onSnapshot(q, (snapshot) => {
-    if (snapshot.empty) {
-      vehicleList.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400 font-bold">No vehicles found. Add your first listing!</td></tr>';
-      return;
+  
+  try {
+    if (forceServer) {
+      updateStatus(false, 'Fetching from Cloud...');
+      try {
+        // Try a simple getDocs first to see if we can reach the collection
+        const snapshot = await getDocsFromServer(collection(db, 'vehicles'));
+        allVehiclesAdmin = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), metadata: doc.metadata }));
+        renderAdminList();
+        updateStatus(true);
+        if (window.logDebug) window.logDebug(`✅ Cloud Sync Successful: Found ${snapshot.size} vehicles`);
+        return;
+      } catch (serverErr) {
+        console.warn("Server fetch failed, falling back to cache:", serverErr);
+        if (window.logDebug) window.logDebug(`⚠️ Cloud fetch failed: ${serverErr.message}. Trying cache...`, true);
+        const snapshot = await getDocs(collection(db, 'vehicles'));
+        allVehiclesAdmin = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), metadata: doc.metadata }));
+        renderAdminList();
+        updateStatus(true, 'Loaded (Cache)');
+        if (window.logDebug) window.logDebug(`📦 Cache Load: Found ${snapshot.size} vehicles`);
+        return;
+      }
     }
-    allVehiclesAdmin = [];
-    snapshot.forEach(doc => allVehiclesAdmin.push({ id: doc.id, ...doc.data() }));
-    renderAdminList();
-  }, (err) => handleFirestoreError(err, 'LIST', 'vehicles'));
+
+    // Use a simpler query for the real-time listener to avoid index issues
+    const q = collection(db, 'vehicles');
+    onSnapshot(q, (snapshot) => {
+      if (snapshot.empty && allVehiclesAdmin.length === 0) {
+        vehicleList.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400 font-bold">No vehicles found. Add your first listing!</td></tr>';
+        return;
+      }
+      allVehiclesAdmin = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), metadata: doc.metadata }));
+      if (window.logDebug) window.logDebug(`🔄 Snapshot Update: ${snapshot.size} vehicles (Source: ${snapshot.metadata.fromCache ? 'Cache' : 'Server'})`);
+      renderAdminList();
+    }, (err) => {
+      console.error("Snapshot error:", err);
+      updateStatus(false, 'Sync Error');
+      if (window.logDebug) window.logDebug(`Snapshot Error: ${err.message}`, true);
+    });
+  } catch (err) {
+    console.error("Load error:", err);
+    updateStatus(false, 'Load Error');
+    if (window.logDebug) window.logDebug(`Load Error: ${err.message}`, true);
+  }
 }
 
 function renderAdminList() {
-  const sortVal = adminSort.value;
-  let sorted = [...allVehiclesAdmin];
+  try {
+    const sortVal = adminSort.value;
+    let sorted = [...allVehiclesAdmin];
 
-  sorted.sort((a, b) => {
-    const timeA = (a.createdAt && typeof a.createdAt.toMillis === 'function') ? a.createdAt.toMillis() : 0;
-    const timeB = (b.createdAt && typeof b.createdAt.toMillis === 'function') ? b.createdAt.toMillis() : 0;
-    
-    if (sortVal === 'date-new') return timeB - timeA;
-    if (sortVal === 'date-old') return timeA - timeB;
-    if (sortVal === 'stock-asc') return a.stockNumber.localeCompare(b.stockNumber);
-    if (sortVal === 'stock-desc') return b.stockNumber.localeCompare(a.stockNumber);
-    return 0;
-  });
+    sorted.sort((a, b) => {
+      const timeA = (a.createdAt && typeof a.createdAt.toMillis === 'function') ? a.createdAt.toMillis() : 0;
+      const timeB = (b.createdAt && typeof b.createdAt.toMillis === 'function') ? b.createdAt.toMillis() : 0;
+      
+      if (sortVal === 'date-new') return timeB - timeA;
+      if (sortVal === 'date-old') return timeA - timeB;
+      
+      const stockA = a.stockNumber || '';
+      const stockB = b.stockNumber || '';
+      if (sortVal === 'stock-asc') return stockA.localeCompare(stockB);
+      if (sortVal === 'stock-desc') return stockB.localeCompare(stockA);
+      return 0;
+    });
 
-  vehicleList.innerHTML = '';
-  sorted.forEach((data) => {
-    const dateStr = data.createdAt ? data.createdAt.toDate().toISOString().split('T')[0] : 'Pending...';
-    const tr = document.createElement('tr');
-    tr.className = 'hover:bg-slate-50 transition-colors block md:table-row border-b md:border-none';
-    tr.innerHTML = `
-      <td class="px-4 py-4 md:px-6 block md:table-cell">
-        <div class="flex items-center gap-3">
-          <img src="${data.images[0]}" class="w-12 h-12 rounded-lg object-cover bg-slate-100 shrink-0">
-          <div class="min-w-0 flex-1">
-            <div class="font-bold text-sm truncate" title="${data.title}">${data.title}</div>
-            <div class="text-xs text-slate-400">${data.year} • ${data.transmission}</div>
+    vehicleList.innerHTML = '';
+    sorted.forEach((data) => {
+      const isPending = (data.metadata && data.metadata.hasPendingWrites) || !data.createdAt;
+      const dateStr = data.createdAt ? (data.createdAt.toDate ? data.createdAt.toDate().toISOString().split('T')[0] : new Date(data.createdAt).toISOString().split('T')[0]) : '<span class="text-amber-500 italic">Pending...</span>';
+      
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-slate-50 transition-colors block md:table-row border-b md:border-none';
+      const firstImage = (data.images && data.images.length > 0) ? data.images[0] : 'https://picsum.photos/seed/car/200/200';
+      
+      tr.innerHTML = `
+        <td class="px-4 py-4 md:px-6 block md:table-cell">
+          <div class="flex items-center gap-3">
+            <img src="${firstImage}" class="w-12 h-12 rounded-lg object-cover bg-slate-100 shrink-0">
+            <div class="min-w-0 flex-1">
+              <div class="font-bold text-sm truncate flex items-center gap-1" title="${data.title || 'Untitled'}">
+                ${data.title || 'Untitled'}
+                ${isPending ? '<span class="material-symbols-outlined text-[14px] text-amber-500 animate-spin" title="Syncing to Cloud...">sync</span>' : '<span class="material-symbols-outlined text-[14px] text-emerald-500" title="Synced to Cloud">cloud_done</span>'}
+              </div>
+              <div class="text-xs text-slate-400">${data.year || 'N/A'} • ${data.transmission || 'N/A'}</div>
+            </div>
           </div>
-        </div>
-      </td>
-      <td class="px-4 py-2 md:px-6 md:py-4 text-xs md:text-sm text-slate-500 font-medium block md:table-cell">
-        <span class="md:hidden text-slate-400 font-bold uppercase mr-2">Added:</span>${dateStr}
-      </td>
-      <td class="px-4 py-2 md:px-6 md:py-4 text-xs md:text-sm font-medium text-slate-500 block md:table-cell">
-        <span class="md:hidden text-slate-400 font-bold uppercase mr-2">Stock:</span>${data.stockNumber}
-      </td>
-      <td class="px-4 py-2 md:px-6 md:py-4 block md:table-cell">
-        <span class="md:hidden text-slate-400 font-bold uppercase mr-2">Status:</span>
-        <span class="px-2 py-1 rounded text-[10px] font-black tracking-widest ${
-          data.status === 'IN STOCK' ? 'bg-green-100 text-green-700' : 
-          data.status === 'RESERVED' ? 'bg-amber-100 text-amber-700' : 
-          'bg-blue-100 text-blue-700'
-        }">${data.status}</span>
-      </td>
-      <td class="px-4 py-2 md:px-6 md:py-4 text-sm font-bold block md:table-cell">
-        <span class="md:hidden text-slate-400 font-bold uppercase mr-2">Price:</span>
-        <span class="text-secondary">¥${parseInt(data.price).toLocaleString()}</span>
-      </td>
-      <td class="px-4 py-4 md:px-6 md:py-4 text-right block md:table-cell">
-        <div class="flex items-center justify-end gap-4 md:gap-2">
-          <button id="edit-${data.id}" class="flex items-center gap-1 px-3 py-2 md:p-2 bg-slate-100 md:bg-transparent rounded-lg text-slate-600 md:text-slate-400 hover:text-secondary transition-colors">
-            <span class="material-symbols-outlined text-xl">edit</span>
-            <span class="md:hidden text-xs font-bold">Edit</span>
-          </button>
-          <button id="delete-${data.id}" class="flex items-center gap-1 px-3 py-2 md:p-2 bg-red-50 md:bg-transparent rounded-lg text-red-600 md:text-slate-400 hover:text-red-600 transition-colors">
-            <span class="material-symbols-outlined text-xl">delete</span>
-            <span class="md:hidden text-xs font-bold">Delete</span>
-          </button>
-        </div>
-      </td>
-    `;
-    vehicleList.appendChild(tr);
-    
-    document.getElementById(`edit-${data.id}`).addEventListener('click', () => editVehicle(data.id));
-    document.getElementById(`delete-${data.id}`).addEventListener('click', () => deleteVehicle(data.id));
-  });
+        </td>
+        <td class="px-4 py-2 md:px-6 md:py-4 text-xs md:text-sm text-slate-500 font-medium block md:table-cell">
+          <span class="md:hidden text-slate-400 font-bold uppercase mr-2">Added:</span>${dateStr}
+        </td>
+        <td class="px-4 py-2 md:px-6 md:py-4 text-xs md:text-sm font-medium text-slate-500 block md:table-cell">
+          <span class="md:hidden text-slate-400 font-bold uppercase mr-2">Stock:</span>${data.stockNumber || 'N/A'}
+        </td>
+        <td class="px-4 py-2 md:px-6 md:py-4 block md:table-cell">
+          <span class="md:hidden text-slate-400 font-bold uppercase mr-2">Status:</span>
+          <span class="px-2 py-1 rounded text-[10px] font-black tracking-widest ${
+            data.status === 'IN STOCK' ? 'bg-green-100 text-green-700' : 
+            data.status === 'RESERVED' ? 'bg-amber-100 text-amber-700' : 
+            'bg-blue-100 text-blue-700'
+          }">${data.status || 'UNKNOWN'}</span>
+        </td>
+        <td class="px-4 py-2 md:px-6 md:py-4 text-sm font-bold block md:table-cell">
+          <span class="md:hidden text-slate-400 font-bold uppercase mr-2">Price:</span>
+          <span class="text-secondary">¥${parseInt(data.price || 0).toLocaleString()}</span>
+        </td>
+        <td class="px-4 py-4 md:px-6 md:py-4 text-right block md:table-cell">
+          <div class="flex items-center justify-end gap-4 md:gap-2">
+            <button id="edit-${data.id}" class="flex items-center gap-1 px-3 py-2 md:p-2 bg-slate-100 md:bg-transparent rounded-lg text-slate-600 md:text-slate-400 hover:text-secondary transition-colors">
+              <span class="material-symbols-outlined text-xl">edit</span>
+              <span class="md:hidden text-xs font-bold">Edit</span>
+            </button>
+            <button id="delete-${data.id}" class="flex items-center gap-1 px-3 py-2 md:p-2 bg-red-50 md:bg-transparent rounded-lg text-red-600 md:text-slate-400 hover:text-red-600 transition-colors">
+              <span class="material-symbols-outlined text-xl">delete</span>
+              <span class="md:hidden text-xs font-bold">Delete</span>
+            </button>
+          </div>
+        </td>
+      `;
+      vehicleList.appendChild(tr);
+      
+      document.getElementById(`edit-${data.id}`).addEventListener('click', () => editVehicle(data.id));
+      document.getElementById(`delete-${data.id}`).addEventListener('click', () => deleteVehicle(data.id));
+    });
+  } catch (err) {
+    console.error("Render error:", err);
+    if (window.logDebug) window.logDebug(`Render Error: ${err.message}`, true);
+  }
 }
 
 adminSort.addEventListener('change', renderAdminList);
@@ -582,6 +647,62 @@ function makeFeatured(index) {
   renderPhotoPreviews();
 }
 
+// Connection Status Logic
+function updateStatus(connected, message) {
+  if (!connectionStatus) return;
+  const dot = connectionStatus.querySelector('div');
+  const text = connectionStatus.querySelector('span');
+  
+  if (connected) {
+    dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500';
+    text.textContent = 'Connected';
+    connectionStatus.className = 'flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold';
+  } else {
+    dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse';
+    text.textContent = message || 'Retrying...';
+    connectionStatus.className = 'flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 text-[10px] font-bold';
+  }
+}
+
+// Helper for Firestore with Timeout and Retry
+async function withTimeoutAndRetry(operation, label, maxRetries = 3, timeoutMs = 120000) {
+  let lastError;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const attemptLabel = i > 0 ? `${label} (Retry ${i}/${maxRetries})` : label;
+      console.log(`🚀 ${attemptLabel} starting...`);
+      updateStatus(false, attemptLabel);
+      
+      const result = await Promise.race([
+        operation(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} Timeout`)), timeoutMs))
+      ]);
+      
+      console.log(`✅ ${label} success!`);
+      return result;
+    } catch (err) {
+      lastError = err;
+      console.warn(`❌ Attempt ${i + 1} failed for ${label}:`, err);
+      
+      // If it's a timeout, try resetting the network
+      if (err.message.includes('Timeout')) {
+        console.log("🔄 Timeout detected, resetting network...");
+        try {
+          await disableNetwork(db);
+          await new Promise(r => setTimeout(r, 1000));
+          await enableNetwork(db);
+        } catch (netErr) {
+          console.error("Failed to reset network:", netErr);
+        }
+      }
+
+      updateStatus(false, `Retrying ${label}...`);
+      await new Promise(resolve => setTimeout(resolve, 3000 * (i + 1))); 
+    }
+  }
+  throw lastError;
+}
+
 // Restore Initial Data
 restoreDataBtn.addEventListener('click', async () => {
   if (!confirm('This will CLEAR ALL existing listings and restore the 4 initial vehicle listings. Continue?')) return;
@@ -590,55 +711,47 @@ restoreDataBtn.addEventListener('click', async () => {
   restoreDataBtn.textContent = 'Restoring...';
 
   try {
-    const snapshot = await getDocs(collection(db, 'vehicles'));
-    const deletePromises = snapshot.docs.map(vDoc => deleteDoc(doc(db, 'vehicles', vDoc.id)));
-    await Promise.all(deletePromises);
+    if (window.logDebug) window.logDebug("🚀 Starting inventory restore...");
+    
+    updateStatus(false, 'Connecting...');
+    const snapshot = await withTimeoutAndRetry(() => getDocs(collection(db, 'vehicles')), 'Fetch Inventory');
+    
+    if (!snapshot.empty) {
+      updateStatus(false, 'Clearing Old Data...');
+      for (const vDoc of snapshot.docs) {
+        await withTimeoutAndRetry(() => deleteDoc(doc(db, 'vehicles', vDoc.id)), `Deleting ${vDoc.id}`);
+      }
+    }
     console.log('Cleared existing inventory');
 
+    updateStatus(false, 'Seeding New Data...');
     const reversedVehicles = [...initialVehicles].reverse();
+    const batch = writeBatch(db);
+    
     for (const v of reversedVehicles) {
-      v.createdAt = serverTimestamp();
-      v.updatedAt = serverTimestamp();
-      await addDoc(collection(db, 'vehicles'), v);
-      // Small delay to ensure distinct timestamps for ordering
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const docId = v.stockNumber.replace(/[^a-zA-Z0-9]/g, '_');
+      const vehicleData = {
+        ...v,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      batch.set(doc(db, 'vehicles', docId), vehicleData);
+      if (window.logDebug) window.logDebug(`📝 Added to batch: ${v.title}`);
     }
+
+    if (window.logDebug) window.logDebug("📤 Committing batch to cloud...");
+    await withTimeoutAndRetry(() => batch.commit(), 'Batch Commit');
+    
+    updateStatus(true);
+    if (window.logDebug) window.logDebug("✅ Inventory restore complete!");
     alert('Inventory reset and initial data restored successfully!');
-    
-    // Also seed a default landing page config
-    const firstFour = reversedVehicles.slice(0, 4);
-    const landingConfig = {
-      mainFeatured: {
-        vehicleId: '', // Will be filled below
-        photoUrl: firstFour[0].images[0],
-        description: firstFour[0].description.substring(0, 150) + '...'
-      },
-      secondaryFeatured: firstFour.slice(1).map(v => ({
-        vehicleId: '', // Will be filled below
-        photoUrl: v.images[0]
-      })),
-      updatedAt: serverTimestamp()
-    };
-
-    // We need the actual IDs from the newly created docs
-    const newSnapshot = await getDocs(collection(db, 'vehicles'));
-    const newDocs = newSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    
-    // Match by stock number
-    const mainDoc = newDocs.find(d => d.stockNumber === firstFour[0].stockNumber);
-    if (mainDoc) landingConfig.mainFeatured.vehicleId = mainDoc.id;
-    
-    landingConfig.secondaryFeatured = firstFour.slice(1).map(v => {
-      const d = newDocs.find(doc => doc.stockNumber === v.stockNumber);
-      return { vehicleId: d ? d.id : '', photoUrl: v.images[0] };
-    });
-
-    await setDoc(doc(db, 'settings', 'landingPage'), landingConfig);
-    console.log('Default landing page config seeded');
-
+    location.reload();
   } catch (e) {
     console.error('Error during restore:', e);
-    alert('Error restoring data: ' + e.message);
+    updateStatus(false, 'Restore Failed');
+    const errorMsg = e.message || String(e);
+    if (window.logDebug) window.logDebug(`❌ Restore Failed: ${errorMsg}`, true);
+    alert('Error restoring data: ' + errorMsg + '\n\nPlease check the Debug Console for details.');
   } finally {
     restoreDataBtn.disabled = false;
     restoreDataBtn.innerHTML = '<span class="material-symbols-outlined text-sm">history</span> Restore Initial Data';
@@ -667,9 +780,11 @@ checkDefaultDbBtn.addEventListener('click', async () => {
     
     if (snapshot.empty) {
       alert('The "(default)" database is also empty. No vehicles found there.');
+      migrateDataBtn.classList.add('hidden');
     } else {
       const titles = snapshot.docs.map(d => d.data().title).join(', ');
-      alert(`Found ${snapshot.size} vehicles in Default DB: ${titles}\n\nIf your Suzuki Jimny is in this list, it means it was saved to the wrong database. Please let me know and I can help you migrate it!`);
+      alert(`Found ${snapshot.size} vehicles in Default DB: ${titles}\n\nIf your Suzuki Jimny is in this list, it means it was saved to the wrong database. You can now use the "Migrate from Default DB" button to move them!`);
+      migrateDataBtn.classList.remove('hidden');
     }
   } catch (e) {
     console.error('Error checking default DB:', e);
@@ -677,6 +792,161 @@ checkDefaultDbBtn.addEventListener('click', async () => {
   } finally {
     checkDefaultDbBtn.disabled = false;
     checkDefaultDbBtn.innerHTML = '<span class="material-symbols-outlined text-xs">search</span> Check Default DB';
+  }
+});
+
+// Emergency Cache Reset
+clearCacheBtn.addEventListener('click', async () => {
+  if (confirm('This will clear your browser\'s local database cache and reload the page. This can fix "Pending" or duplicate items. Continue?')) {
+    try {
+      await terminate(db);
+    } catch (e) {
+      console.error('Error terminating DB:', e);
+    }
+    window.location.reload();
+  }
+});
+
+// Hard Reset (Clear IndexedDB and Cache)
+hardResetBtn.addEventListener('click', async () => {
+  if (!confirm('DANGER: This will completely wipe your local browser database and reload. This is the "nuclear option" for fixing sync issues. Continue?')) return;
+  
+  try {
+    if (window.logDebug) window.logDebug("☢️ Performing Hard Reset...");
+    await terminate(db);
+    // Clear IndexedDB
+    const dbName = `firestore/[post-storage]/${firebaseConfig.projectId}/${firebaseConfig.firestoreDatabaseId || '(default)'}/main`;
+    const deleteRequest = indexedDB.deleteDatabase(dbName);
+    deleteRequest.onsuccess = () => {
+      if (window.logDebug) window.logDebug("✅ Local DB Deleted. Reloading...");
+      window.location.reload();
+    };
+    deleteRequest.onerror = () => {
+      if (window.logDebug) window.logDebug("❌ Failed to delete local DB. Reloading anyway...");
+      window.location.reload();
+    };
+    deleteRequest.onblocked = () => {
+      if (window.logDebug) window.logDebug("⚠️ DB Delete Blocked. Reloading...");
+      window.location.reload();
+    };
+  } catch (e) {
+    console.error("Hard reset error:", e);
+    window.location.reload();
+  }
+});
+
+// Clear All Cloud Data
+clearAllDataBtn.addEventListener('click', async () => {
+  if (!confirm('⚠️ DANGER: This will PERMANENTLY DELETE ALL vehicles from the cloud database. This cannot be undone. Are you absolutely sure?')) return;
+  
+  clearAllDataBtn.disabled = true;
+  clearAllDataBtn.textContent = 'Deleting...';
+  
+  try {
+    const snapshot = await getDocs(collection(db, 'vehicles'));
+    let count = 0;
+    for (const vDoc of snapshot.docs) {
+      await deleteDoc(doc(db, 'vehicles', vDoc.id));
+      count++;
+    }
+    alert(`Successfully deleted ${count} vehicles from the cloud.`);
+    if (window.logDebug) window.logDebug(`🗑️ Deleted ${count} vehicles from cloud`);
+  } catch (e) {
+    console.error('Error clearing data:', e);
+    alert('Failed to clear data: ' + e.message);
+  } finally {
+    clearAllDataBtn.disabled = false;
+    clearAllDataBtn.innerHTML = '<span class="material-symbols-outlined text-xs">delete_sweep</span> Clear All Cloud Data';
+  }
+});
+
+// Force Cloud Sync
+forceSyncBtn.addEventListener('click', () => loadVehicles(true));
+
+// Debug Info
+debugInfoBtn.addEventListener('click', async () => {
+  if (window.showDebug) window.showDebug();
+  
+  if (window.logDebug) window.logDebug("🔍 Running connection diagnostics...");
+  
+  const info = {
+    auth: auth.currentUser ? { uid: auth.currentUser.uid, email: auth.currentUser.email, verified: auth.currentUser.emailVerified } : 'Not Logged In',
+    dbId: firebaseConfig.firestoreDatabaseId,
+    projectId: firebaseConfig.projectId,
+    online: navigator.onLine,
+    userAgent: navigator.userAgent.substring(0, 50) + '...'
+  };
+  
+  if (window.logDebug) window.logDebug(`🛠️ Environment: ${JSON.stringify(info)}`);
+
+  // Network Ping Test
+  try {
+    if (window.logDebug) window.logDebug("🌐 Testing Internet Access (Ping)...");
+    const start = Date.now();
+    await fetch('https://www.google.com/favicon.ico', { mode: 'no-cors', cache: 'no-store' });
+    if (window.logDebug) window.logDebug(`✅ Internet Reachable (${Date.now() - start}ms)`);
+  } catch (e) {
+    if (window.logDebug) window.logDebug(`⚠️ Internet Ping Failed (This is normal in some restricted environments)`, true);
+  }
+
+  // Test Write
+  if (auth.currentUser) {
+    try {
+      if (window.logDebug) window.logDebug(`📡 Testing Cloud Write (DB: ${firebaseConfig.firestoreDatabaseId})...`);
+      const testDoc = doc(db, '_debug', auth.currentUser.uid);
+      await withTimeoutAndRetry(() => setDoc(testDoc, { 
+        lastTest: serverTimestamp(),
+        email: auth.currentUser.email 
+      }), 'Connection Test Write', 1, 20000);
+      if (window.logDebug) window.logDebug("✅ Cloud Write Successful!");
+    } catch (e) {
+      if (window.logDebug) window.logDebug(`❌ Cloud Write Failed: ${e.message}`, true);
+    }
+  } else {
+    if (window.logDebug) window.logDebug("⚠️ Cannot test write: Not logged in.");
+  }
+});
+
+// Migration Logic
+migrateDataBtn.addEventListener('click', async () => {
+  if (!confirm('This will COPY all vehicles from the "(default)" database to the current database. Existing vehicles with the same stock number will be updated. Continue?')) return;
+  
+  migrateDataBtn.disabled = true;
+  migrateDataBtn.textContent = 'Migrating...';
+  
+  try {
+    const app = getApp();
+    const diagDb = initializeFirestore(app, { databaseId: '(default)' }, `migrate-${Date.now()}`);
+    const snapshot = await getDocs(collection(diagDb, 'vehicles'));
+    
+    if (snapshot.empty) {
+      alert('No vehicles found to migrate.');
+      return;
+    }
+
+    let count = 0;
+    for (const vDoc of snapshot.docs) {
+      const data = vDoc.data();
+      // Check if it already exists in current DB by stock number
+      const currentSnapshot = await getDocs(collection(db, 'vehicles'));
+      const existing = currentSnapshot.docs.find(d => d.data().stockNumber === data.stockNumber);
+      
+      if (existing) {
+        await updateDoc(doc(db, 'vehicles', existing.id), { ...data, updatedAt: serverTimestamp() });
+      } else {
+        await addDoc(collection(db, 'vehicles'), { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+      }
+      count++;
+    }
+    
+    alert(`Successfully migrated ${count} vehicles!`);
+    migrateDataBtn.classList.add('hidden');
+  } catch (e) {
+    console.error('Migration error:', e);
+    alert('Migration failed: ' + e.message);
+  } finally {
+    migrateDataBtn.disabled = false;
+    migrateDataBtn.innerHTML = '<span class="material-symbols-outlined text-xs">move_down</span> Migrate from Default DB';
   }
 });
 

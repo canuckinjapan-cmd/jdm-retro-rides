@@ -41,6 +41,10 @@ service cloud.firestore {
       allow create, update: if isAdmin(); // Only admins can manage roles
     }
 
+    match /_debug/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();

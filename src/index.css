@@ -1,0 +1,111 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* JDM Retro Rides — Dark Heritage Design System
+   Charcoal + Bronze. All colors HSL.
+*/
+
+@theme {
+  /* Core surfaces — deep charcoal */
+  --color-background: hsl(24 10% 7%);
+  --color-foreground: hsl(36 30% 92%);
+
+  --color-card: hsl(24 8% 10%);
+  --color-card-foreground: hsl(36 30% 92%);
+
+  --color-popover: hsl(24 10% 9%);
+  --color-popover-foreground: hsl(36 30% 92%);
+
+  /* Primary — antique bronze */
+  --color-primary: hsl(32 55% 52%);
+  --color-primary-foreground: hsl(24 15% 8%);
+  --color-primary-glow: hsl(36 70% 62%);
+  --color-bronze: hsl(32 55% 52%);
+
+  /* Secondary — warm graphite */
+  --color-secondary: hsl(24 8% 14%);
+  --color-secondary-foreground: hsl(36 25% 88%);
+
+  --color-muted: hsl(24 6% 16%);
+  --color-muted-foreground: hsl(32 12% 62%);
+
+  --color-accent: hsl(32 55% 52%);
+  --color-accent-foreground: hsl(24 15% 8%);
+
+  /* Signal red — used sparingly for SOLD/urgency */
+  --color-destructive: hsl(6 72% 50%);
+  --color-destructive-foreground: hsl(36 30% 95%);
+
+  --color-success: hsl(142 45% 45%);
+  --color-success-foreground: hsl(36 30% 95%);
+
+  --color-border: hsl(30 10% 18%);
+  --color-input: hsl(30 10% 18%);
+  --color-ring: hsl(32 55% 52%);
+
+  --radius-lg: 0.25rem;
+  --radius-md: calc(0.25rem - 2px);
+  --radius-sm: calc(0.25rem - 4px);
+
+  /* Fonts */
+  --font-display: "Bebas Neue", "Inter", sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* Custom Gradients & Shadows */
+  --background-image-gradient-bronze: linear-gradient(135deg, hsl(32 55% 52%), hsl(36 70% 62%));
+  --background-image-gradient-hero: linear-gradient(180deg, hsl(24 10% 5% / 0.2) 0%, hsl(24 10% 5% / 0.5) 50%, hsl(24 10% 5% / 0.95) 100%);
+  --background-image-gradient-card: linear-gradient(180deg, hsl(24 8% 12%) 0%, hsl(24 10% 8%) 100%);
+  
+  --shadow-bronze: 0 8px 30px -8px hsl(32 55% 52% / 0.35);
+  --shadow-deep: 0 24px 60px -20px hsl(0 0% 0% / 0.6);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    @apply antialiased;
+    font-family: var(--font-sans);
+    font-feature-settings: 'ss01', 'cv11';
+  }
+
+  h1, h2, h3, .display {
+    font-family: var(--font-display);
+    letter-spacing: 0.01em;
+  }
+
+  .mono {
+    font-family: var(--font-mono);
+  }
+}
+
+@layer utilities {
+  .gradient-bronze {
+    background-image: var(--background-image-gradient-bronze);
+  }
+  .gradient-hero {
+    background-image: var(--background-image-gradient-hero);
+  }
+  .gradient-card {
+    background-image: var(--background-image-gradient-card);
+  }
+  .shadow-bronze {
+    box-shadow: var(--shadow-bronze);
+  }
+  .shadow-deep {
+    box-shadow: var(--shadow-deep);
+  }
+  .grain::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.06;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}

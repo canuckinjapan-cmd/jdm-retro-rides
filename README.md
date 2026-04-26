@@ -1,20 +1,20 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# JDM Retro Rides
 
-# Run and deploy your AI Studio app
+Specialist supplier of legendary Japanese domestic market classics since 1996.
 
-This contains everything you need to run your app locally.
+This platform manages a curated inventory of JDM classics, providing potential buyers with high-quality media, specifications, and history for each vehicle.
 
-View your app in AI Studio: https://ai.studio/apps/ce06ebb3-6b6d-4772-a340-73bd224515f7
+## Features
 
-## Run Locally
+- **Inventory Showcase**: Filter and sort through a wide range of iconic JDM vehicles.
+- **Detailed Vehicle Overlays**: Full-screen immersive details including high-res galleries and technical specs.
+- **Admin Dashboard**: Secure management system for inventory, images, and sales status.
+- **Multi-Currency Support**: Real-time currency conversion for international buyers.
+- **Responsive Experience**: Optimized for mobile, tablet, and desktop viewing.
 
-**Prerequisites:**  Node.js
+## Development
 
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+- **Framework**: React 19 + TypeScript + Vite.
+- **Styling**: Tailwind CSS 4.
+- **Backend**: Firebase Firestore & Auth.
+- **UI Components**: Radix UI / shadcn.

@@ -8,6 +8,7 @@ import tailwindcss from '@tailwindcss/vite';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Vite configuration for GitHub Pages deployment
 export default defineConfig({
   base: '/jdm-design-guru/',
   appType: 'spa',

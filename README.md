@@ -18,3 +18,6 @@ This platform manages a curated inventory of JDM classics, providing potential b
 - **Styling**: Tailwind CSS 4.
 - **Backend**: Firebase Firestore & Auth.
 - **UI Components**: Radix UI / shadcn.
+
+---
+*Latest Sync: 2026-04-26*
